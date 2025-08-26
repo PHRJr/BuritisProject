@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - Seleção de Loja</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+    <header class="page-header">
+        <div class="header-logo">
+            <a href="index.html"><img src="imagens/logo.png" alt="Logo da Empresa"></a>
+        </div>
+        <div class="options-menu-container">
+            <button class="options-button" id="options-btn">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <div class="dropdown-menu" id="dropdown-menu">
+                <a href="index.html">Voltar para a tela inicial</a>
+                <a href="#" id="limpar-btn">Limpar o preenchimento</a>
+                <a href="mailto:suporte@suaempresa.com">Entrar em contato com o suporte</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Identificação e Seleção de Loja</h1>
+        
+        <div class="caixa-instrucoes">
+            <p><strong>Bem-vindo!</strong> Por favor, selecione a loja e preencha seus dados para continuar. Suas informações de nome e telefone serão salvas para agilizar futuros acessos.</p>
+        </div>
+
+        <div class="form-card">
+            <form id="form-inicio">
+                <div class="form-group">
+                    <label for="loja">Selecione a Loja:</label>
+                    <select id="loja" name="loja" required>
+                        <option value="">Carregando lojas...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nome">Seu Nome:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefone">Seu Telefone:</label>
+                    <input type="tel" id="telefone" name="telefone" required maxlength="15">
+                </div>
+                <button type="submit">Avançar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
