@@ -64,7 +64,8 @@ def salvar_dados():
 def index():
     return send_from_directory('.', 'index.html')
 
-# Inicia o servidor quando o script é executado
-if __name__ == '__main__':
-    # debug=True faz com que o servidor reinicie automaticamente quando você altera o código
-    app.run(host='0.0.0.0', debug=True, port=5000)
+'# Inicia o servidor quando o script é executado
+'if __name__ == '__main__':
+'    # debug=True faz com que o servidor reinicie automaticamente quando você altera o código
+
+'    app.run(host='0.0.0.0', debug=True, port=5000)
