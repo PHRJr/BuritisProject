@@ -1,51 +1,70 @@
 import os
 import psycopg2
+import psycopg2.extras # Importante para o DictCursor
 from flask import Flask, request, jsonify, send_from_directory
+from decimal import Decimal, InvalidOperation # Para lidar com números decimais
 
-# Inicializa a aplicação Flask
 app = Flask(__name__)
 
 # --- Conexão com o Banco de Dados ---
-# Função auxiliar para não repetir o código de conexão
 def get_db_connection():
-    """Cria e retorna uma nova conexão com o banco de dados."""
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
-        # Isso ajuda a identificar o erro caso a variável de ambiente não esteja configurada
         raise ValueError("A variável de ambiente DATABASE_URL não foi definida.")
     conn = psycopg2.connect(db_url)
     return conn
 
 # --- Rotas da API (A Lógica do seu App) ---
-
 @app.route('/api/adicionar_item', methods=['POST'])
 def adicionar_item():
-    """Recebe dados via POST e insere no banco de dados."""
+    """Recebe uma lista de produtos e os insere no banco de dados."""
     try:
         data = request.get_json()
 
-        # Extrai os dados, garantindo que não dê erro se um campo vier vazio
-        cod_item = data.get('COD_ITEM')
-        qtde = data.get('QTDE')
-        validade = data.get('VALIDADE')
-        user = data.get('USER')
-        telefone = data.get('TELEFONE')
-        loja = data.get('LOJA')
+        # Extrai os dados gerais
+        loja = data.get('loja')
+        user = data.get('nome')
+        telefone_str = ''.join(filter(str.isdigit, data.get('telefone', '')))
+        
+        # Converte telefone para número, se possível
+        telefone = int(telefone_str) if telefone_str else None
 
-        # Validação para garantir que o campo principal foi enviado
-        if not cod_item:
-            return jsonify({'error': 'COD_ITEM é um campo obrigatório'}), 400
+        # Pega a lista de produtos
+        produtos = data.get('produtos')
+
+        if not produtos:
+            return jsonify({'error': 'A lista de produtos está vazia.'}), 400
 
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Comando SQL seguro para inserir os dados
+        # SQL para inserir os dados de forma SEGURA
         sql = """
             INSERT INTO entradas (cod_item, qtde, validade, "user", telefone, loja)
             VALUES (%s, %s, %s, %s, %s, %s);
         """
         
-        cur.execute(sql, (cod_item, qtde, validade, user, telefone, loja))
+        # Itera sobre cada produto da lista e o insere no banco
+        for produto in produtos:
+            cod_item = produto.get('codigo')
+            
+            # Tratamento da quantidade: troca vírgula por ponto e converte para Decimal
+            try:
+                qtde_str = produto.get('quantidade', '0').replace(',', '.')
+                qtde = Decimal(qtde_str)
+            except InvalidOperation:
+                qtde = Decimal('0')
+
+            # Tratamento da data: converte de DD/MM/AAAA para AAAA-MM-DD se não for vazia
+            validade_str = produto.get('validade')
+            if validade_str and len(validade_str.split('/')) == 3:
+                partes = validade_str.split('/')
+                validade = f"{partes[2]}-{partes[1]}-{partes[0]}"
+            else:
+                validade = None # Salva como nulo se a data for inválida ou vazia
+
+            # Executa o comando para este produto
+            cur.execute(sql, (cod_item, qtde, validade, user, telefone, loja))
 
         conn.commit()
         cur.close()
@@ -54,7 +73,6 @@ def adicionar_item():
         return jsonify({'message': 'Dados salvos com sucesso!'}), 201
 
     except Exception as e:
-        # Retorna uma mensagem de erro clara se algo der errado
         return jsonify({'error': f"Ocorreu um erro: {str(e)}"}), 500
 
 @app.route('/api/itens', methods=['GET'])
@@ -62,30 +80,21 @@ def listar_itens():
     """Busca e retorna todos os itens salvos no banco de dados."""
     try:
         conn = get_db_connection()
-        # O cursor "dict" retorna os dados como um dicionário (chave: valor), mais fácil de usar no frontend
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        
-        # Ordena os itens pelo ID, do mais recente para o mais antigo
         cur.execute('SELECT * FROM entradas ORDER BY id DESC;')
         itens = cur.fetchall()
-        
         cur.close()
         conn.close()
-
-        # Converte a lista de itens para um formato JSON e a retorna
         return jsonify([dict(item) for item in itens])
 
     except Exception as e:
         return jsonify({'error': f"Ocorreu um erro: {str(e)}"}), 500
 
 # --- Rotas para Servir os Arquivos HTML/CSS/JS (Frontend) ---
-
 @app.route('/')
 def rota_principal():
-    """Serve a página inicial 'index.html'."""
     return send_from_directory('.', 'index.html')
 
 @app.route('/<path:filename>')
 def servir_pagina(filename):
-    """Serve qualquer outro arquivo (ex: produtos.html, estilo.css, script.js)."""
     return send_from_directory('.', filename)
