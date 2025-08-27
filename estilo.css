@@ -1,0 +1,358 @@
+/* ---- ESTA É A SUA FOLHA DE ESTILOS CENTRAL ---- */
+
+:root {
+    --cor-primaria: #007bff;
+    --cor-sucesso: #28a745;
+    --cor-borda: #dee2e6;
+    --cor-fundo: #f8f9fa;
+    --cor-perigo: #dc3545;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    color: #333;
+    
+    /* ---- AQUI ESTÁ A ALTERAÇÃO ---- */
+    /* Combina uma camada de cor com a imagem para criar o efeito de transparência */
+    background:
+        linear-gradient(rgba(248, 249, 250, 0.9), rgba(248, 249, 250, 0.9)),
+        url('imagens/fundo-textura.png') repeat fixed;
+}
+
+/* --- Estilos do Cabeçalho (usado em todas as páginas) --- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+.options-menu-container {
+    position: relative;
+}
+.options-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+}
+.options-button .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    margin: 5px 0;
+    background-color: #333;
+    transition: 0.3s;
+}
+.header-logo img {
+    max-height: 40px;
+    display: block;
+}
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    min-width: 200px;
+    z-index: 1;
+    list-style: none;
+    padding: 5px 0;
+    margin: 5px 0 0 0;
+}
+.dropdown-menu.show {
+    display: block;
+}
+.dropdown-menu a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.95em;
+}
+.dropdown-menu a:hover {
+    background-color: #f1f1f1;
+}
+
+/* --- Estilos Gerais de Conteúdo --- */
+.container {
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+}
+
+/* --- Estilos de produtos.html --- */
+.caixa-instrucoes {
+    background-color: #e9f5ff;
+    border-left: 5px solid var(--cor-primaria);
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+.caixa-instrucoes p {
+    margin: 0;
+}
+.produto-card {
+    display: flex;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+    border: 1px solid var(--cor-borda);
+}
+.produto-imagem {
+    flex: 0 0 100px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.produto-imagem img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+.produto-info {
+    flex-grow: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.produto-info .nome { font-weight: bold; font-size: 1.1em; }
+.produto-info .preco { color: var(--cor-sucesso); font-weight: bold; }
+.campo-quantidade {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.campo-quantidade input { flex-grow: 1; }
+.campo-quantidade .unidade-texto { font-size: 0.9em; color: #6c757d; }
+.unidade {
+    display: none;
+}
+.validade-acao-wrapper {
+    display: flex;
+    align-items: center;
+}
+.validade-acao-wrapper .campo-validade {
+    flex-grow: 1;
+}
+
+.validade-acao-wrapper .acao {
+    margin-left: 10px;
+}
+
+.acao {
+    display: flex;
+    gap: 5px;
+}
+input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+}
+input[type=number] { -moz-appearance: textfield; }
+.cabecalho-tabela {
+    display: none;
+}
+#botoes { text-align: center; margin-top: 30px; }
+#form-produtos button[type="submit"] {
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: var(--cor-sucesso);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+#form-produtos button[type="submit"]:hover {
+    background-color: #218838;
+}
+.btn-duplicar, .btn-remover {
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    line-height: 30px;
+    padding: 0;
+    flex-shrink: 0;
+}
+.btn-duplicar {
+    background-color: var(--cor-sucesso);
+}
+.btn-duplicar:hover {
+    background-color: #218838;
+}
+.btn-remover {
+    background-color: var(--cor-perigo);
+}
+.btn-remover:hover {
+    background-color: #c82333;
+}
+
+@media (min-width: 769px) {
+    #lista-produtos {
+        display: table;
+        width: 100%;
+        border-collapse: collapse;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    }
+    .cabecalho-tabela {
+        display: table-header-group;
+        background-color: var(--cor-primaria);
+        color: white;
+        font-weight: bold;
+    }
+    .cabecalho-tabela div {
+        display: table-cell;
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid var(--cor-borda);
+    }
+    .produto-card {
+        display: table-row;
+        box-shadow: none;
+        border-radius: 0;
+        border: none;
+    }
+    .produto-card:nth-of-type(even) {
+        background-color: #f9f9f9;
+    }
+
+    .produto-info {
+        display: contents;
+    }
+
+    .produto-imagem,
+    .produto-info > div {
+        display: table-cell;
+        vertical-align: middle;
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--cor-borda);
+    }
+
+    .campo-quantidade .unidade-texto {
+        display: none;
+    }
+    .unidade {
+        display: table-cell;
+    }
+    #lista-produtos .produto-imagem img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    
+    .validade-acao-wrapper .campo-validade,
+    .validade-acao-wrapper .acao {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .validade-acao-wrapper .campo-validade {
+        width: calc(100% - 50px);
+    }
+}
+
+/* --- Estilos Adicionais para index.html --- */
+/* (O resto do arquivo continua igual) */
+.form-card {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    max-width: 500px;
+    margin: 0 auto;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+.form-card input, .form-card select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+.form-card button {
+    width: 100%;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: var(--cor-primaria);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+.form-card button:hover {
+    background-color: #0056b3;
+}
+
+/* --- Estilos Adicionais para confirmacao.html --- */
+.confirmacao-card {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 600px;
+    margin: 40px auto;
+}
+.confirmacao-card h1 {
+    color: var(--cor-sucesso);
+}
+.confirmacao-card p {
+    margin: 20px 0;
+    font-size: 1.1em;
+}
+.botao-confirmacao {
+    display: inline-block;
+    padding: 12px 25px;
+    background-color: var(--cor-primaria);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.botao-confirmacao:hover {
+    background-color: #0056b3;
+}
