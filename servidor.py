@@ -2,6 +2,7 @@ import os
 import psycopg2
 import psycopg2.extras # Importante para o DictCursor
 from flask import Flask, request, jsonify, send_from_directory
+import mimetypes
 from decimal import Decimal, InvalidOperation # Para lidar com números decimais
 
 app = Flask(__name__)
@@ -97,4 +98,21 @@ def rota_principal():
 
 @app.route('/<path:filename>')
 def servir_pagina(filename):
-    return send_from_directory('.', filename)
+    """
+    Serve os arquivos da pasta raiz (HTML, CSS, JS, etc.)
+    garantindo que o cabeçalho Content-Type correto seja enviado.
+    """
+    try:
+        # Usa a biblioteca mimetypes para adivinhar o tipo do arquivo pela extensão
+        mimetype, _ = mimetypes.guess_type(filename)
+        
+        # Se não conseguir adivinhar, define um tipo padrão seguro
+        if mimetype is None:
+            mimetype = 'application/octet-stream'
+        
+        # Envia o arquivo, mas agora FORÇANDO o Flask a usar o mimetype correto
+        # Isso vai adicionar o cabeçalho 'Content-Type' que estava faltando
+        return send_from_directory('.', filename, mimetype=mimetype)
+    except FileNotFoundError:
+        # Se o arquivo não existir, retorna um erro 404 claro
+        return "Arquivo não encontrado", 404
