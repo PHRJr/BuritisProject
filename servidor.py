@@ -1,70 +1,91 @@
-# servidor.py
 import os
-import csv
+import psycopg2
 from flask import Flask, request, jsonify, send_from_directory
 
 # Inicializa a aplicação Flask
 app = Flask(__name__)
 
-# Rota para servir os arquivos CSV para o JavaScript poder lê-los
-@app.route('/<path:filename>')
-def serve_static(filename):
-    return send_from_directory('.', filename)
+# --- Conexão com o Banco de Dados ---
+# Função auxiliar para não repetir o código de conexão
+def get_db_connection():
+    """Cria e retorna uma nova conexão com o banco de dados."""
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        # Isso ajuda a identificar o erro caso a variável de ambiente não esteja configurada
+        raise ValueError("A variável de ambiente DATABASE_URL não foi definida.")
+    conn = psycopg2.connect(db_url)
+    return conn
 
-# Rota que vai receber os dados da página de produtos e salvar no CSV
-@app.route('/salvar-dados', methods=['POST'])
-def salvar_dados():
-    """
-    Recebe os dados do formulário da página de produtos e os anexa ao export.csv.
-    """
-    # Pega os dados enviados pelo JavaScript. Eles vêm em formato JSON.
-    dados_recebidos = request.json['produtos']
-    
-    # Define o nome do arquivo de exportação
-    nome_arquivo_export = 'export.csv'
-    
-    # Verifica se o arquivo já existe para saber se precisa escrever o cabeçalho
-    arquivo_existe = os.path.isfile(nome_arquivo_export)
-    
+# --- Rotas da API (A Lógica do seu App) ---
+
+@app.route('/api/adicionar_item', methods=['POST'])
+def adicionar_item():
+    """Recebe dados via POST e insere no banco de dados."""
     try:
-        # Abre o arquivo no modo 'a' (append/anexar), para adicionar no final sem apagar o que já existe
-        with open(nome_arquivo_export, mode='a', newline='', encoding='utf-8') as f:
-            escritor_csv = csv.writer(f)
-            
-            # Se o arquivo não existia, escreve o cabeçalho primeiro
-            if not arquivo_existe:
-                escritor_csv.writerow(['codigo_produto', 'quantidade', 'data_validade', 'nome_usuario', 'telefone_usuario', 'loja'])
-            
-            # Pega os dados do usuário e da loja que também foram enviados
-            nome_usuario = request.json['nome']
-            telefone_usuario = request.json['telefone']
-            loja = request.json['loja']
+        data = request.get_json()
 
-            # Escreve uma linha no CSV para cada produto recebido
-            for produto in dados_recebidos:
-                escritor_csv.writerow([
-                    produto['codigo'], 
-                    produto['quantidade'], 
-                    produto['validade'],
-                    nome_usuario,
-                    telefone_usuario,
-                    loja
-                ])
-                
-        # Retorna uma resposta de sucesso para o navegador
-        return jsonify({"status": "sucesso", "mensagem": "Dados salvos com sucesso!"}), 200
+        # Extrai os dados, garantindo que não dê erro se um campo vier vazio
+        cod_item = data.get('COD_ITEM')
+        qtde = data.get('QTDE')
+        validade = data.get('VALIDADE')
+        user = data.get('USER')
+        telefone = data.get('TELEFONE')
+        loja = data.get('LOJA')
+
+        # Validação para garantir que o campo principal foi enviado
+        if not cod_item:
+            return jsonify({'error': 'COD_ITEM é um campo obrigatório'}), 400
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Comando SQL seguro para inserir os dados
+        sql = """
+            INSERT INTO entradas (cod_item, qtde, validade, "user", telefone, loja)
+            VALUES (%s, %s, %s, %s, %s, %s);
+        """
+        
+        cur.execute(sql, (cod_item, qtde, validade, user, telefone, loja))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'message': 'Dados salvos com sucesso!'}), 201
 
     except Exception as e:
-        # Em caso de erro, retorna uma mensagem de erro
-        print(f"Erro ao salvar dados: {e}")
-        return jsonify({"status": "erro", "mensagem": str(e)}), 500
+        # Retorna uma mensagem de erro clara se algo der errado
+        return jsonify({'error': f"Ocorreu um erro: {str(e)}"}), 500
 
-# Rota principal para carregar o index.html
+@app.route('/api/itens', methods=['GET'])
+def listar_itens():
+    """Busca e retorna todos os itens salvos no banco de dados."""
+    try:
+        conn = get_db_connection()
+        # O cursor "dict" retorna os dados como um dicionário (chave: valor), mais fácil de usar no frontend
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        
+        # Ordena os itens pelo ID, do mais recente para o mais antigo
+        cur.execute('SELECT * FROM entradas ORDER BY id DESC;')
+        itens = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+
+        # Converte a lista de itens para um formato JSON e a retorna
+        return jsonify([dict(item) for item in itens])
+
+    except Exception as e:
+        return jsonify({'error': f"Ocorreu um erro: {str(e)}"}), 500
+
+# --- Rotas para Servir os Arquivos HTML/CSS/JS (Frontend) ---
+
 @app.route('/')
-def index():
+def rota_principal():
+    """Serve a página inicial 'index.html'."""
     return send_from_directory('.', 'index.html')
 
-# Inicia o servidor quando o script é executado
-if __name__ == '__main__':
-    # debug=True faz com que o servidor reinicie automaticamente quando você altera o código
-    app.run(host='0.0.0.0', debug=True, port=5000)
+@app.route('/<path:filename>')
+def servir_pagina(filename):
+    """Serve qualquer outro arquivo (ex: produtos.html, estilo.css, script.js)."""
+    return send_from_directory('.', filename)
