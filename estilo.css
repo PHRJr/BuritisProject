@@ -12,10 +12,12 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     color: #333;
-    background-image: url('imagens/fundo-textura.png');
-    background-repeat: repeat;
-    background-attachment: fixed;
-    background-color: var(--cor-fundo);
+    
+    /* ---- AQUI ESTÁ A ALTERAÇÃO ---- */
+    /* Combina uma camada de cor com a imagem para criar o efeito de transparência */
+    background:
+        linear-gradient(rgba(248, 249, 250, 0.9), rgba(248, 249, 250, 0.9)),
+        url('imagens/fundo-textura.png') repeat fixed;
 }
 
 /* --- Estilos do Cabeçalho (usado em todas as páginas) --- */
@@ -55,7 +57,7 @@ body {
     display: none;
     position: absolute;
     top: 100%;
-    right: 0; 
+    right: 0;
     background-color: white;
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     border-radius: 5px;
@@ -148,11 +150,15 @@ h1 {
 .validade-acao-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
 }
 .validade-acao-wrapper .campo-validade {
     flex-grow: 1;
 }
+
+.validade-acao-wrapper .acao {
+    margin-left: 10px;
+}
+
 .acao {
     display: flex;
     gap: 5px;
@@ -169,7 +175,7 @@ input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none; margin: 0;
 }
 input[type=number] { -moz-appearance: textfield; }
-.cabecalho-tabela { 
+.cabecalho-tabela {
     display: none;
 }
 #botoes { text-align: center; margin-top: 30px; }
@@ -241,9 +247,11 @@ input[type=number] { -moz-appearance: textfield; }
     .produto-card:nth-of-type(even) {
         background-color: #f9f9f9;
     }
+
     .produto-info {
-        display: contents; 
+        display: contents;
     }
+
     .produto-imagem,
     .produto-info > div {
         display: table-cell;
@@ -251,6 +259,7 @@ input[type=number] { -moz-appearance: textfield; }
         padding: 12px 15px;
         border-bottom: 1px solid var(--cor-borda);
     }
+
     .campo-quantidade .unidade-texto {
         display: none;
     }
@@ -263,12 +272,20 @@ input[type=number] { -moz-appearance: textfield; }
         object-fit: cover;
         border-radius: 4px;
     }
-    .produto-info .acao {
-        text-align: center;
+    
+    .validade-acao-wrapper .campo-validade,
+    .validade-acao-wrapper .acao {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .validade-acao-wrapper .campo-validade {
+        width: calc(100% - 50px);
     }
 }
 
 /* --- Estilos Adicionais para index.html --- */
+/* (O resto do arquivo continua igual) */
 .form-card {
     background-color: #ffffff;
     padding: 30px;
