@@ -1,5 +1,5 @@
 // =================================================================
-// ARQUIVO server.js - VERSÃO FINAL E CORRIGIDA
+// ARQUIVO server.js - VERSÃO COM A CORREÇÃO NA CONSULTA SQL
 // =================================================================
 require('dotenv').config();
 
@@ -16,6 +16,8 @@ const { Parser } = require('json2csv');
 
 // --- 2. CONFIGURAÇÃO INICIAL ---
 const app = express();
+// Confia no proxy da Render para que o cookie de sessão seguro funcione
+app.set('trust proxy', 1);
 const port = process.env.PORT || 3000;
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -29,14 +31,16 @@ const pool = new Pool({
 });
 
 // --- 5. CONFIGURAÇÃO DA SESSÃO ---
+// --- 5. CONFIGURAÇÃO DA SESSÃO ---
 app.use(session({
-    secret: 'seu-segredo-deve-ser-muito-bem-guardado',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 horas
-    }
+    secret: process.env.SESSION_SECRET || 'seu-segredo-deve-ser-muito-bem-guardado',
+    resave: false,
+    saveUninitialized: false, // Alterado para false para melhores práticas
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // Mantém-se igual
+        maxAge: 24 * 60 * 60 * 1000, // 24 horas
+        httpOnly: true // Adicionado para segurança extra
+    }
 }));
 
 // --- 6. MIDDLEWARE DE AUTENTICAÇÃO ---
@@ -135,75 +139,174 @@ app.get('/api/lojas', isUserLoggedIn, async (req, res) => {
     }
 });
 
+// --- INÍCIO DA CORREÇÃO ---
 app.get('/api/produtos', isUserLoggedIn, async (req, res) => {
-    const { loja } = req.query;
-    try {
-        const query = `
-            SELECT p.codigo, p.nome, p.unidade, p.preco, p.url_imagem
-            FROM produtos p
-            JOIN loja_produtos lp ON p.codigo = lp.produto_codigo
-            JOIN lojas l ON l.id = lp.loja_id
-            WHERE l.nome = $1;
-        `;
-        const result = await pool.query(query, [loja]);
-        res.status(200).json(result.rows);
-    } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
-        res.status(500).json({ message: 'Erro interno no servidor.' });
-    }
-});
+    const { loja } = req.query;
+    try {
+        // CORREÇÃO: A consulta agora começa na mesma linha da crase, sem espaços antes.
+        const query = `SELECT p.codigo, p.nome, p.unidade, p.preco, p.url_imagem
+            FROM produtos p
+            JOIN loja_produtos lp ON p.codigo = lp.produto_codigo
+            JOIN lojas l ON l.id = lp.loja_id
+            WHERE l.nome = $1;`;
 
+        const result = await pool.query(query, [loja]);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Erro ao buscar produtos:', error);
+        res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
+});
+// --- FIM DA CORREÇÃO ---
+
+// --- CÓDIGO CORRIGIDO ---
 app.post('/api/adicionar_item', isUserLoggedIn, async (req, res) => {
-    const { loja, nome, telefone, produtos } = req.body;
-    const emailUsuarioLogado = req.session.user.email;
+    const { loja, nome, telefone, produtos } = req.body;
+    const emailUsuarioLogado = req.session.user.email;
 
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
 
-        for (const produto of produtos) {
-            const validadeSQL = produto.validade ? produto.validade.split('/').reverse().join('-') : null;
-            
-            const query = `
-                INSERT INTO itens_submetidos (
-                    email_usuario_padrao, 
-                    nome_loja, 
-                    produto_codigo, 
-                    quantidade, 
-                    validade, 
-                    nome_usuario, 
-                    telefone_usuario,
-                    preco_unitario
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            `;
-            
-            await client.query(query, [
-                emailUsuarioLogado,
-                loja,
-                produto.codigo,
-                parseFloat(produto.quantidade),
-                validadeSQL,
-                nome,
-                telefone,
-                parseFloat(produto.preco)
-            ]);
-        }
+        for (const produto of produtos) {
+            const validadeSQL = produto.validade ? produto.validade.split('/').reverse().join('-') : null;
+            
+            // A consulta foi reescrita para garantir que não há caracteres inválidos.
+            const query = `
+                INSERT INTO itens_submetidos (
+                    email_usuario_padrao, 
+                    nome_loja, 
+                    produto_codigo, 
+                    quantidade, 
+                    validade, 
+                    nome_usuario, 
+                    telefone_usuario,
+                    preco_unitario
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `;
+            
+            await client.query(query, [
+                emailUsuarioLogado,
+                loja,
+                produto.codigo,
+                parseFloat(produto.quantidade),
+                validadeSQL,
+                nome,
+                telefone,
+                parseFloat(produto.preco)
+            ]);
+        }
 
-        await client.query('COMMIT');
-        res.status(200).json({ message: 'Itens adicionados com sucesso!' });
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Erro ao adicionar itens:', error);
-        res.status(500).json({ message: error.message || 'Erro ao salvar os dados.' });
-    } finally {
-        client.release();
-    }
+        await client.query('COMMIT');
+        res.status(200).json({ message: 'Itens adicionados com sucesso!' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Erro ao adicionar itens:', error);
+        res.status(500).json({ message: error.message || 'Erro ao salvar os dados.' });
+    } finally {
+        client.release();
+    }
+});
+// ... (Restante das rotas de API sem alterações)
+// --- ROTAS DE UPLOAD E EXPORTAÇÃO (ADMIN) ---
+
+// ROTA PARA ATUALIZAR UTILIZADORES
+app.post('/api/upload-users', isAdminLoggedIn, upload.single('userCsvFile'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'Nenhum arquivo CSV de utilizador enviado.' });
+    }
+    try {
+        const client = await pool.connect();
+        await client.query('BEGIN');
+        await client.query('DELETE FROM utilizadores_padrao'); // Limpa a tabela
+
+        const users = await parseCsvBuffer(req.file.buffer);
+
+        for (const user of users) {
+            if (user.email) { // Garante que a coluna 'email' existe
+                await client.query('INSERT INTO utilizadores_padrao (email) VALUES ($1)', [user.email]);
+            }
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ message: 'Lista de utilizadores padrão atualizada com sucesso!' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Erro ao atualizar utilizadores:', error);
+        res.status(500).json({ message: 'Erro interno ao processar o arquivo de utilizadores.' });
+    }
 });
 
-// ... (Restante das rotas de API sem alterações)
-app.post('/api/upload-users', /* ... */);
-app.post('/api/atualizar-dados', /* ... */);
-app.get('/api/exportar-entradas', /* ... */);
+// ROTA PARA ATUALIZAR PRODUTOS E LOJAS
+app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
+    { name: 'produtosCsvFile', maxCount: 1 },
+    { name: 'lojasCsvFile', maxCount: 1 }
+]), async (req, res) => {
+    if (!req.files || !req.files.produtosCsvFile || !req.files.lojasCsvFile) {
+        return res.status(400).json({ message: 'É necessário enviar ambos os arquivos: produtos e lojas.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        const produtos = await parseCsvBuffer(req.files.produtosCsvFile[0].buffer);
+        const lojas = await parseCsvBuffer(req.files.lojasCsvFile[0].buffer, { headers: false });
+
+        await client.query('BEGIN');
+
+        // 1. Limpa as tabelas
+        await client.query('DELETE FROM loja_produtos');
+        await client.query('DELETE FROM produtos');
+        await client.query('DELETE FROM lojas');
+
+        // 2. Insere os produtos
+        for (const p of produtos) {
+            const query = 'INSERT INTO produtos (codigo, nome, unidade, url_imagem, preco) VALUES ($1, $2, $3, $4, $5)';
+            await client.query(query, [p.codigo, p.nome, p.unidade, p.imagem_url, parseFloat(p.preco_unitario)]);
+        }
+
+        // 3. Insere as lojas e as relações
+        for (let i = 0; i < lojas[0].length; i++) {
+            const nomeLoja = lojas[0][i];
+            const resLoja = await client.query('INSERT INTO lojas (nome) VALUES ($1) RETURNING id', [nomeLoja]);
+            const lojaId = resLoja.rows[0].id;
+
+            for (let j = 1; j < lojas.length; j++) {
+                const codProduto = lojas[j][i];
+                if (codProduto) {
+                    await client.query('INSERT INTO loja_produtos (loja_id, produto_codigo) VALUES ($1, $2)', [lojaId, codProduto]);
+                }
+            }
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ message: 'Produtos e lojas atualizados com sucesso!' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Erro ao atualizar dados:', error);
+        res.status(500).json({ message: 'Erro interno ao processar os arquivos.' });
+    } finally {
+        client.release();
+    }
+});
+
+// ROTA PARA EXPORTAR ENTRADAS
+app.get('/api/exportar-entradas', isAdminLoggedIn, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM itens_submetidos ORDER BY id DESC');
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Nenhuma entrada para exportar.' });
+        }
+        const json2csvParser = new Parser();
+        const csv = json2csvParser.parse(result.rows);
+        res.header('Content-Type', 'text/csv');
+        res.attachment('relatorio_entradas.csv');
+        res.send(csv);
+    } catch (error) {
+        console.error('Erro ao exportar entradas:', error);
+        res.status(500).json({ message: 'Erro interno ao gerar o relatório.' });
+    }
+});
 
 
 // =================================================================
