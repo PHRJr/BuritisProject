@@ -12,10 +12,16 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configuração do Banco de Dados (sem alterações)
+# Código novo e corrigido
 if 'DATABASE_URL' in os.environ:
-    database_url = os.environ['DATABASE_URL'].replace("://", "ql://", 1)
+    database_url = os.environ['DATABASE_URL']
+    # A Render já fornece a URL no formato correto (postgresql://),
+    # mas esta verificação garante compatibilidade com outras plataformas.
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
+    # Para desenvolvimento local, se não houver DATABASE_URL
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
