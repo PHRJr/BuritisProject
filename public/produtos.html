@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lançamento de Produtos</title>
+    <title>Produtos da Loja</title>
     <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
+
     <header class="page-header">
         <div class="header-logo">
             <a href="index.html"><img src="imagens/logo.png" alt="Logo da Empresa"></a>
@@ -24,29 +25,31 @@
             </div>
         </div>
     </header>
-    
-    <div class="container">
-        <h1 id="titulo-loja">Produtos da Loja</h1>
+
+    <form id="form-produtos" class="container">
+        <h1 id="titulo-loja">Carregando produtos...</h1>
+        
         <div class="caixa-instrucoes">
             <p><strong>Instruções:</strong> Preencha a <strong>Quantidade</strong> e a <strong>Data de Validade</strong> para os produtos desejados. Use o botão <strong>+</strong> para adicionar um novo lote do mesmo produto com uma validade diferente.</p>
         </div>
-        <form id="form-produtos">
-            <div id="lista-produtos">
-                <div class="cabecalho-tabela">
-                    <div>Imagem</div>
-                    <div>Produto</div>
-                    <div>Preço Unit.</div>
-                    <div>Quantidade</div>
-                    <div>Unidade</div>
-                    <div>Validade</div>
-                </div>
+
+        <div id="lista-produtos">
+            <div class="tabela-cabecalho">
+                <div>Imagem</div>
+                <div>Produto</div>
+                <div>Preço Unit.</div>
+                <div>Quantidade</div>
+                <div>Unidade</div>
+                <div>Validade</div>
             </div>
-            <div id="botoes">
-                <button type="submit">Salvar Dados</button>
             </div>
-        </form>
-    </div>
-    
-    <script src="script.js" defer></script>
+
+        <div id="botoes">
+            <button type="submit">Salvar Dados</button>
+        </div>
+    </form>
+
+    <script src="script.js"></script>
+
 </body>
 </html>

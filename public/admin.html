@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração do Sistema</title>
+    <link rel="stylesheet" href="estilo.css">
+    <style>
+        .logout-link {
+            color: #dc3545; text-decoration: none; font-weight: bold; margin-left: auto;
+        }
+        .logout-link:hover { text-decoration: underline; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-logo">
+            <a href="/index.html"><img src="imagens/logo.png" alt="Logo da Empresa"></a>
+        </div>
+        <h1>Painel de Administração</h1>
+        <a href="#" id="logout-btn" class="logout-link">Sair</a>
+    </header>
+
+    <div class="container">
+        <div class="form-card" style="max-width: 600px; margin: auto;">
+            <h2>Atualizar Produtos e Lojas</h2>
+            <p>
+                Faça o upload dos arquivos CSV para atualizar os dados do site. 
+                <strong>Atenção:</strong> Esta ação irá substituir TODOS os dados existentes de produtos e lojas.
+            </p>
+            <form id="upload-form">
+                <div class="form-group">
+                    <label for="produtos-csv">Arquivo de Produtos (produtos.csv):</label>
+                    <input type="file" id="produtos-csv" name="produtosCsvFile" class="input-field" accept=".csv" required>
+                </div>
+                <div class="form-group">
+                    <label for="lojas-csv">Arquivo de Lojas (lojas_formatado.csv):</label>
+                    <input type="file" id="lojas-csv" name="lojasCsvFile" class="input-field" accept=".csv" required>
+                </div>
+                <button type="submit" class="button">Atualizar Produtos</button>
+            </form>
+            <div id="status-message" style="margin-top: 15px; font-weight: bold;"></div>
+        </div>
+
+        <hr style="margin: 3rem 0;">
+
+        <div class="form-card" style="max-width: 600px; margin: auto;">
+            <h2>Gestão de Utilizadores Padrão</h2>
+            <p>Envie um arquivo CSV com a nova lista de emails autorizados. <strong>A lista atual será substituída.</strong></p>
+            <p><small>O arquivo deve ter uma única coluna com o cabeçalho: <code>email</code></small></p>
+            
+            <form id="upload-users-form">
+                <div class="form-group">
+                    <label for="users-csv">Arquivo de Utilizadores (ex: emails.csv):</label>
+                    <input type="file" id="users-csv" name="userCsvFile" class="input-field" accept=".csv" required>
+                </div>
+                <button type="submit" class="button">Atualizar Lista de Utilizadores</button>
+            </form>
+            <div id="upload-users-status" style="margin-top: 15px; font-weight: bold;"></div>
+        </div>
+
+    </div>
+
+    <hr style="margin: 3rem 0;">
+
+    <div class="form-card" style="max-width: 600px; margin: auto;">
+        <h2>Exportar Dados de Entradas</h2>
+        <p>Clique no botão abaixo para baixar um arquivo CSV com todos os produtos submetidos pelos utilizadores.</p>
+        <button id="export-btn" class="button" style="background-color: #17a2b8;">Baixar Relatório de Entradas</button>
+        <p id="export-status" style="margin-top: 15px; font-weight: bold;"></p>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

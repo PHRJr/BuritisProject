@@ -1,0 +1,26 @@
+# Ambientes Virtuais do Python
+/venv/
+/.venv/
+/env/
+/virtual/
+venv/
+
+# Arquivos de cache do Python
+__pycache__/
+*.py[cod]
+
+# Arquivos de ambiente (contêm senhas!)
+.env
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de log e banco de dados local
+*.log
+local.db
+
+# ---- ADICIONE AS LINHAS ABAIXO ----
+# Dependências do Node.js
+/node_modules/
+npm-debug.log

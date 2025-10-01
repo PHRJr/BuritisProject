@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso de Utilizador</title>
+    <link rel="stylesheet" href="estilo.css">
+    <style>
+        /* Estilos adicionais específicos para esta página, se necessário */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5; /* Um fundo suave */
+        }
+        .login-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .login-container h1 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        .login-container .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .login-container label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        .login-container input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            font-size: 1em;
+        }
+        .login-container button {
+            background-color: #007bff; /* Cor primária do botão */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        .login-container button:hover {
+            background-color: #0056b3; /* Cor mais escura no hover */
+        }
+        .login-container #login-status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Acesso de Utilizador</h1>
+        <form id="user-login-form">
+            <div class="form-group">
+                <label for="user-email">Email:</label>
+                <input type="email" id="user-email" class="input-field" required>
+            </div>
+            <button type="submit" class="button">Entrar</button>
+            <p id="user-login-status" style="color: grey; margin-top: 15px;"></p>
+        </form>
+        <p style="margin-top: 20px;">
+            É administrador? <a href="login_admin.html">Aceda aqui</a>
+        </p>
+    </div>
+
+    <script src="login.js" defer></script>
+</body>
+</html>

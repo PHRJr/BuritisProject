@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso de Administrador</title>
+    <link rel="stylesheet" href="estilo.css">
+    <style>
+        /* Estilos adicionais específicos para esta página, se necessário */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+        }
+        .login-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .login-container h1 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        .login-container .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .login-container label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        .login-container input[type="email"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        .login-container button {
+            background-color: #28a745; /* Cor verde para o botão de admin */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        .login-container button:hover {
+            background-color: #218838;
+        }
+        .login-container #admin-login-error {
+            margin-top: 15px;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Acesso de Administrador</h1>
+        <form id="admin-login-form">
+            <div class="form-group">
+                <label for="admin-email">Email:</label>
+                <input type="email" id="admin-email" class="input-field" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Senha:</label>
+                <input type="password" id="admin-password" class="input-field" required>
+            </div>
+            <button type="submit" class="button">Entrar como Admin</button>
+            <p id="admin-login-error"></p>
+        </form>
+    </div>
+    
+
+    <script src="login_admin.js" defer></script>
+</body>
+</html>
