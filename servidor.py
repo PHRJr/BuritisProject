@@ -10,11 +10,16 @@ load_dotenv()
 # --- INICIALIZAÇÃO E CONFIGURAÇÃO ---
 app = Flask(__name__)
 
-# Configuração do Banco de Dados
+# Configuração do Banco de Dados (sem alterações)
 if 'DATABASE_URL' in os.environ:
-    database_url = os.environ['DATABASE_URL'].replace("://", "ql://", 1)
+    database_url = os.environ['DATABASE_URL']
+    # A Render já fornece a URL no formato correto (postgresql://),
+    # mas esta verificação garante compatibilidade com outras plataformas.
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
+    # Para desenvolvimento local, se não houver DATABASE_URL
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -26,7 +31,7 @@ class Entradas(db.Model):
     cod_item = db.Column(db.String(255), nullable=False)
     qtde = db.Column(db.Numeric(10, 3))
     validade = db.Column(db.Date)
-    user = db.Column('user', db.String(255)) # <-- CORREÇÃO APLICADA AQUI
+    "user" = db.Column('user', db.String(255))
     telefone = db.Column(db.BigInteger)
     loja = db.Column(db.String(255))
     atualizacao = db.Column(db.DateTime(timezone=True), server_default=func.now())
