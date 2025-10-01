@@ -251,55 +251,102 @@ app.post('/api/upload-users', isAdminLoggedIn, upload.single('userCsvFile'), asy
 });
 
 // ROTA PARA ATUALIZAR PRODUTOS E LOJAS
+// ROTA PARA ATUALIZAR PRODUTOS E LOJAS (COM DIAGNÓSTICO MELHORADO)
 app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
     { name: 'produtosCsvFile', maxCount: 1 },
     { name: 'lojasCsvFile', maxCount: 1 }
 ]), async (req, res) => {
+    console.log("Iniciando a rota /api/atualizar-dados...");
+
     if (!req.files || !req.files.produtosCsvFile || !req.files.lojasCsvFile) {
-        return res.status(400).json({ message: 'É necessário enviar ambos os arquivos: produtos e lojas.' });
+        console.error("ERRO: Faltam arquivos. Upload abortado.");
+        return res.status(400).json({ message: 'É necessário enviar os dois arquivos.' });
     }
 
     const client = await pool.connect();
     try {
+        // --- ETAPA DE PARSING ---
+        console.log("A processar o arquivo de produtos...");
         const produtos = await parseCsvBuffer(req.files.produtosCsvFile[0].buffer);
-        const lojas = await parseCsvBuffer(req.files.lojasCsvFile[0].buffer, { headers: false });
+        console.log(`Sucesso! ${produtos.length} produtos encontrados no CSV.`);
+        // Linha de diagnóstico: descomente se precisar de ver os dados dos produtos
+        // console.log("Dados dos produtos:", JSON.stringify(produtos, null, 2));
 
+        console.log("A processar o arquivo de lojas...");
+        const lojasCsvContent = req.files.lojasCsvFile[0].buffer.toString('utf-8');
+        const linhasLojas = lojasCsvContent.trim().split('\n');
+        const nomesLojas = linhasLojas[0].split(',').map(h => h.trim());
+        const relacoes = [];
+        for (let i = 1; i < linhasLojas.length; i++) {
+            const codigosProdutos = linhasLojas[i].split(',').map(c => c.trim());
+            codigosProdutos.forEach((codigo, index) => {
+                if (codigo) relacoes.push({ nome_loja: nomesLojas[index], produto_codigo: codigo });
+            });
+        }
+        console.log(`Sucesso! ${nomesLojas.length} lojas e ${relacoes.length} relações encontradas no CSV.`);
+        // Linha de diagnóstico: descomente se precisar de ver os dados das lojas
+        // console.log("Nomes das lojas:", nomesLojas);
+        // console.log("Relações:", relacoes);
+
+        // --- ETAPA DE BANCO DE DADOS ---
         await client.query('BEGIN');
+        console.log("Transação iniciada. A limpar tabelas antigas...");
+        
+        await client.query('TRUNCATE TABLE loja_produtos, produtos, lojas RESTART IDENTITY CASCADE');
+        console.log("Tabelas limpas com sucesso.");
 
-        // 1. Limpa as tabelas
-        await client.query('DELETE FROM loja_produtos');
-        await client.query('DELETE FROM produtos');
-        await client.query('DELETE FROM lojas');
-
-        // 2. Insere os produtos
+        console.log("A inserir novos produtos...");
         for (const p of produtos) {
-            const query = 'INSERT INTO produtos (codigo, nome, unidade, url_imagem, preco) VALUES ($1, $2, $3, $4, $5)';
-            await client.query(query, [p.codigo, p.nome, p.unidade, p.imagem_url, parseFloat(p.preco_unitario)]);
-        }
-
-        // 3. Insere as lojas e as relações
-        for (let i = 0; i < lojas[0].length; i++) {
-            const nomeLoja = lojas[0][i];
-            const resLoja = await client.query('INSERT INTO lojas (nome) VALUES ($1) RETURNING id', [nomeLoja]);
-            const lojaId = resLoja.rows[0].id;
-
-            for (let j = 1; j < lojas.length; j++) {
-                const codProduto = lojas[j][i];
-                if (codProduto) {
-                    await client.query('INSERT INTO loja_produtos (loja_id, produto_codigo) VALUES ($1, $2)', [lojaId, codProduto]);
-                }
+            // Verificação de dados para garantir que não há valores nulos que quebrem a query
+            if (!p.codigo || !p.nome) {
+                throw new Error(`Produto inválido encontrado no CSV: ${JSON.stringify(p)}`);
             }
+            await client.query(
+                'INSERT INTO produtos (codigo, nome, unidade, preco, url_imagem) VALUES ($1, $2, $3, $4, $5)',
+                [p.codigo, p.nome, p.unidade, parseFloat(p.preco_unitario) || 0, p.imagem_url]
+            );
         }
+        console.log(`${produtos.length} produtos inseridos.`);
+
+        console.log("A inserir novas lojas...");
+        const lojaIdMap = {};
+        for (const nome of nomesLojas) {
+            const result = await client.query('INSERT INTO lojas (nome) VALUES ($1) RETURNING id', [nome]);
+            lojaIdMap[nome] = result.rows[0].id;
+        }
+        console.log(`${nomesLojas.length} lojas inseridas.`);
+
+        console.log("A inserir novas relações loja-produto...");
+        for (const rel of relacoes) {
+            await client.query(
+                'INSERT INTO loja_produtos (loja_id, produto_codigo) VALUES ($1, $2)',
+                [lojaIdMap[rel.nome_loja], rel.produto_codigo]
+            );
+        }
+        console.log(`${relacoes.length} relações inseridas.`);
 
         await client.query('COMMIT');
+        console.log("Transação concluída com sucesso (COMMIT)!");
+
         res.status(200).json({ message: 'Produtos e lojas atualizados com sucesso!' });
 
     } catch (error) {
+        // --- BLOCO DE ERRO ---
+        console.error("!!!!!!!!!! OCORREU UM ERRO DURANTE A TRANSAÇÃO !!!!!!!!!!");
+        console.error("MENSAGEM DE ERRO:", error.message);
+        console.error("DETALHES COMPLETOS DO ERRO:", error); // Log completo
+        
         await client.query('ROLLBACK');
-        console.error('Erro ao atualizar dados:', error);
-        res.status(500).json({ message: 'Erro interno ao processar os arquivos.' });
+        console.error("A TRANSAÇÃO FOI REVERTIDA (ROLLBACK). Os dados antigos foram apagados, mas os novos não foram salvos.");
+        
+        // Envia uma mensagem de erro mais informativa para o frontend
+        res.status(500).json({ 
+            message: `Ocorreu um erro no servidor ao processar os arquivos. Verifique os logs da aplicação.`,
+            error: error.message 
+        });
     } finally {
         client.release();
+        console.log("Conexão com o banco de dados libertada.");
     }
 });
 
