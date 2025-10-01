@@ -27,7 +27,7 @@ class Entradas(db.Model):
     cod_item = db.Column(db.String(255), nullable=False)
     qtde = db.Column(db.Numeric(10, 3))
     validade = db.Column(db.Date)
-    "user" = db.Column('user', db.String(255))
+    user = db.Column('user', db.String(255))
     telefone = db.Column(db.BigInteger)
     loja = db.Column(db.String(255))
     atualizacao = db.Column(db.DateTime(timezone=True), server_default=func.now())
