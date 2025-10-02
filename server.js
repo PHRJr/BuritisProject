@@ -296,16 +296,20 @@ app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
         console.log("Tabelas limpas com sucesso.");
 
         console.log("A inserir novos produtos...");
+        let produtosInseridosCount = 0;
         for (const p of produtos) {
-            // Verificação de dados para garantir que não há valores nulos que quebrem a query
-            if (!p.codigo || !p.nome) {
-                throw new Error(`Produto inválido encontrado no CSV: ${JSON.stringify(p)}`);
+            // CORREÇÃO: Se a linha for inválida (sem código ou nome), simplesmente ignoramos e passamos à próxima.
+            if (p.codigo && p.nome && p.codigo.trim() !== '') {
+                await client.query(
+                    'INSERT INTO produtos (codigo, nome, unidade, preco, url_imagem) VALUES ($1, $2, $3, $4, $5)',
+                    [p.codigo, p.nome, p.unidade, parseFloat(p.preco_unitario) || 0, p.imagem_url]
+                );
+                produtosInseridosCount++;
+            } else {
+                console.log("Aviso: Linha de produto vazia ou inválida ignorada no CSV:", JSON.stringify(p));
             }
-            await client.query(
-                'INSERT INTO produtos (codigo, nome, unidade, preco, url_imagem) VALUES ($1, $2, $3, $4, $5)',
-                [p.codigo, p.nome, p.unidade, parseFloat(p.preco_unitario) || 0, p.imagem_url]
-            );
         }
+        console.log(`${produtosInseridosCount} produtos válidos foram inseridos.`);
         console.log(`${produtos.length} produtos inseridos.`);
 
         console.log("A inserir novas lojas...");
