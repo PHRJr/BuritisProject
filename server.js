@@ -181,32 +181,32 @@ app.post('/api/adicionar_item', isUserLoggedIn, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // Dentro de app.post('/api/adicionar_item', ...) em server.js
+
         for (const produto of produtos) {
             const validadeSQL = produto.validade ? produto.validade.split('/').reverse().join('-') : null;
-            
-            // A consulta foi reescrita para garantir que não há caracteres inválidos.
+
+            // QUERY ATUALIZADA com os novos campos
             const query = `
                 INSERT INTO itens_submetidos (
-                    email_usuario_padrao, 
-                    nome_loja, 
-                    produto_codigo, 
-                    quantidade, 
-                    validade, 
-                    nome_usuario, 
-                    telefone_usuario,
-                    preco_unitario
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    email_usuario_padrao, nome_loja, produto_codigo, 
+                    quantidade, validade, nome_usuario, 
+                    telefone_usuario, preco_unitario, preco_promocional, ponto_extra
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             `;
-            
+
+            // PARÂMETROS ATUALIZADOS para a query
             await client.query(query, [
-                emailUsuarioLogado,
-                loja,
-                produto.codigo,
-                parseFloat(produto.quantidade),
-                validadeSQL,
-                nome,
-                telefone,
-                parseFloat(produto.preco)
+                emailUsuarioLogado, 
+                loja, 
+                produto.codigo, 
+                parseFloat(produto.quantidade), 
+                validadeSQL, 
+                nome, 
+                telefone, 
+                parseFloat(produto.preco),
+                produto.promocao,      // Novo
+                produto.ponto_extra    // Novo
             ]);
         }
 
@@ -252,14 +252,14 @@ app.post('/api/upload-users', isAdminLoggedIn, upload.single('userCsvFile'), asy
 
 // ROTA PARA ATUALIZAR PRODUTOS E LOJAS
 // ROTA PARA ATUALIZAR PRODUTOS E LOJAS (COM DIAGNÓSTICO MELHORADO)
+// ROTA PARA ATUALIZAR PRODUTOS E LOJAS (ADAPTADA PARA O NOVO FORMATO de loja_produtos.csv)
 app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
     { name: 'produtosCsvFile', maxCount: 1 },
-    { name: 'lojasCsvFile', maxCount: 1 }
+    { name: 'lojasCsvFile', maxCount: 1 } // O nome do campo no formulário permanece o mesmo
 ]), async (req, res) => {
     console.log("Iniciando a rota /api/atualizar-dados...");
 
     if (!req.files || !req.files.produtosCsvFile || !req.files.lojasCsvFile) {
-        console.error("ERRO: Faltam arquivos. Upload abortado.");
         return res.status(400).json({ message: 'É necessário enviar os dois arquivos.' });
     }
 
@@ -268,25 +268,16 @@ app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
         // --- ETAPA DE PARSING ---
         console.log("A processar o arquivo de produtos...");
         const produtos = await parseCsvBuffer(req.files.produtosCsvFile[0].buffer);
-        console.log(`Sucesso! ${produtos.length} produtos encontrados no CSV.`);
-        // Linha de diagnóstico: descomente se precisar de ver os dados dos produtos
-        // console.log("Dados dos produtos:", JSON.stringify(produtos, null, 2));
+        console.log(`${produtos.length} produtos encontrados no CSV.`);
 
-        console.log("A processar o arquivo de lojas...");
-        const lojasCsvContent = req.files.lojasCsvFile[0].buffer.toString('utf-8');
-        const linhasLojas = lojasCsvContent.trim().split('\n');
-        const nomesLojas = linhasLojas[0].split(',').map(h => h.trim());
-        const relacoes = [];
-        for (let i = 1; i < linhasLojas.length; i++) {
-            const codigosProdutos = linhasLojas[i].split(',').map(c => c.trim());
-            codigosProdutos.forEach((codigo, index) => {
-                if (codigo) relacoes.push({ nome_loja: nomesLojas[index], produto_codigo: codigo });
-            });
-        }
-        console.log(`Sucesso! ${nomesLojas.length} lojas e ${relacoes.length} relações encontradas no CSV.`);
-        // Linha de diagnóstico: descomente se precisar de ver os dados das lojas
-        // console.log("Nomes das lojas:", nomesLojas);
-        // console.log("Relações:", relacoes);
+        console.log("A processar o arquivo de relações (loja_produtos.csv)...");
+        // CORREÇÃO: Usamos o parser de CSV padrão para o novo formato
+        const relacoes = await parseCsvBuffer(req.files.lojasCsvFile[0].buffer, {
+            mapHeaders: ({ header }) => header.trim() // Garante que os cabeçalhos não têm espaços
+        });
+        // Extrai uma lista de nomes de loja únicos a partir do arquivo de relações
+        const nomesLojas = [...new Set(relacoes.map(item => item.loja_id))];
+        console.log(`Sucesso! ${nomesLojas.length} lojas únicas e ${relacoes.length} relações encontradas.`);
 
         // --- ETAPA DE BANCO DE DADOS ---
         await client.query('BEGIN');
@@ -298,19 +289,15 @@ app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
         console.log("A inserir novos produtos...");
         let produtosInseridosCount = 0;
         for (const p of produtos) {
-            // CORREÇÃO: Se a linha for inválida (sem código ou nome), simplesmente ignoramos e passamos à próxima.
             if (p.codigo && p.nome && p.codigo.trim() !== '') {
                 await client.query(
                     'INSERT INTO produtos (codigo, nome, unidade, preco, url_imagem) VALUES ($1, $2, $3, $4, $5)',
-                    [p.codigo, p.nome, p.unidade, parseFloat(p.preco_unitario) || 0, p.imagem_url]
+                    [p.codigo, p.nome, p.unidade, parseFloat(p.preco) || 0, p.url_imagem]
                 );
                 produtosInseridosCount++;
-            } else {
-                console.log("Aviso: Linha de produto vazia ou inválida ignorada no CSV:", JSON.stringify(p));
             }
         }
         console.log(`${produtosInseridosCount} produtos válidos foram inseridos.`);
-        console.log(`${produtos.length} produtos inseridos.`);
 
         console.log("A inserir novas lojas...");
         const lojaIdMap = {};
@@ -322,12 +309,20 @@ app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
 
         console.log("A inserir novas relações loja-produto...");
         for (const rel of relacoes) {
-            await client.query(
-                'INSERT INTO loja_produtos (loja_id, produto_codigo) VALUES ($1, $2)',
-                [lojaIdMap[rel.nome_loja], rel.produto_codigo]
-            );
+            // CORREÇÃO: Usamos os cabeçalhos corretos do novo CSV
+            const nomeLoja = rel.loja_id;
+            const codigoProduto = rel.produto_codigo;
+            
+            if (lojaIdMap[nomeLoja] && codigoProduto) {
+                 await client.query(
+                    'INSERT INTO loja_produtos (loja_id, produto_codigo) VALUES ($1, $2)',
+                    [lojaIdMap[nomeLoja], codigoProduto]
+                );
+            } else {
+                console.warn(`Aviso: Relação inválida ou incompleta ignorada:`, rel);
+            }
         }
-        console.log(`${relacoes.length} relações inseridas.`);
+        console.log(`${relacoes.length} relações processadas.`);
 
         await client.query('COMMIT');
         console.log("Transação concluída com sucesso (COMMIT)!");
@@ -335,19 +330,13 @@ app.post('/api/atualizar-dados', isAdminLoggedIn, upload.fields([
         res.status(200).json({ message: 'Produtos e lojas atualizados com sucesso!' });
 
     } catch (error) {
-        // --- BLOCO DE ERRO ---
         console.error("!!!!!!!!!! OCORREU UM ERRO DURANTE A TRANSAÇÃO !!!!!!!!!!");
         console.error("MENSAGEM DE ERRO:", error.message);
-        console.error("DETALHES COMPLETOS DO ERRO:", error); // Log completo
         
         await client.query('ROLLBACK');
-        console.error("A TRANSAÇÃO FOI REVERTIDA (ROLLBACK). Os dados antigos foram apagados, mas os novos não foram salvos.");
+        console.error("A TRANSAÇÃO FOI REVERTIDA (ROLLBACK).");
         
-        // Envia uma mensagem de erro mais informativa para o frontend
-        res.status(500).json({ 
-            message: `Ocorreu um erro no servidor ao processar os arquivos. Verifique os logs da aplicação.`,
-            error: error.message 
-        });
+        res.status(500).json({ message: `Ocorreu um erro no servidor.`, error: error.message });
     } finally {
         client.release();
         console.log("Conexão com o banco de dados libertada.");

@@ -139,7 +139,156 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     }
 } /* <--- A CHAVE '}' QUE FALTAVA FOI ADICIONADA AQUI */
 
+/* --- Estilos para os novos campos de Preço e Checkbox --- */
+.preco-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
+.campo-preco-unitario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.campo-preco-unitario label {
+    font-weight: bold;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+.campo-preco-unitario input {
+    max-width: 120px;
+}
+
+.checkboxes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+/* Cole esta versão corrigida no final do seu estilo.css,
+   substituindo a anterior que começava com @media */
+
+@media (min-width: 769px) {
+    /* CORREÇÃO: Alargamos a terceira coluna (de 110px para 250px) para dar espaço aos novos campos */
+    .tabela-cabecalho, .produto-card {
+        grid-template-columns: 100px 1fr 200px 140px 80px 190px;
+    }
+
+    /* Esconde os rótulos que só são necessários na vista mobile */
+    .campo-preco-unitario label {
+        display: none;
+    }
+
+    /* Organiza o container do preço e dos checkboxes */
+    .preco-container {
+        display: flex;
+        flex-direction: column; /* Empilha os elementos verticalmente */
+        align-items: flex-start; /* Alinha à esquerda */
+        justify-content: center;
+        gap: 8px; /* Espaço entre o preço e os checkboxes */
+        height: 100%;
+    }
+
+    .campo-preco-unitario {
+        width: 100%;
+    }
+
+    /* Garante que o input de preço não ocupe a largura toda desnecessariamente */
+    .campo-preco-unitario input {
+        max-width: 100px;
+    }
+
+    /* Organiza os checkboxes */
+    .checkboxes-container {
+        display: flex;
+        flex-direction: column; /* Um checkbox por linha */
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* CORREÇÃO: Impede que o texto do checkbox quebre a linha e seja cortado */
+    .checkbox-label {
+        white-space: nowrap;
+    }
+}
+
+/* --- Estilos para o Botão Flutuante --- */
+.botao-flutuante {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--cor-sucesso);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 30px;
+    line-height: 60px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    text-decoration: none;
+    z-index: 999;
+    transition: background-color 0.3s, transform 0.3s;
+    display: block; /* Começa escondido */
+}
+
+.botao-flutuante:hover {
+    background-color: #218838;
+    transform: scale(1.1);
+}
+
+/* --- Estilos para o Modal de Confirmação --- */
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.modal-botoes {
+    display: flex;
+    justify-content: flex-end; /* Alinha botões à direita */
+    gap: 15px;
+}
+
+.modal-botoes button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.botao-confirmacao {
+    background-color: var(--cor-sucesso);
+    color: white;
+}
+.botao-confirmacao:hover {
+    background-color: #218838;
+}
+
+.botao-cancelar {
+    background-color: #e9ecef;
+    color: #333;
+    border: 1px solid #ccc;
+}
+.botao-cancelar:hover {
+    background-color: #d6d8db;
+}
 /* --- Estilos Adicionais para index.html --- */
 .form-card { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
 .form-group { margin-bottom: 20px; }

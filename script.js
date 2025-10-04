@@ -201,32 +201,56 @@ async function carregarTudo() {
         let htmlParaInserir = '';
 
         produtosDaLoja.forEach(produto => {
-            const precoFormatado = parseFloat(produto.preco).toFixed(2);
             // ESTA É A VERSÃO CORRIGIDA DO HTML, SEM OS TÍTULOS
-            const cardHTML = `
-                <div class="produto-card" data-codigo="${produto.codigo}" data-preco="${produto.preco}" data-original="true">
-                    <div class="produto-imagem">
-                        <img src="${produto.url_imagem || 'imagens/placeholder.png'}" alt="${produto.nome}">
-                    </div>
-                    <div class="produto-info">
-                        <div class="nome">${produto.nome}</div>
-                        <div class="preco">R$ ${precoFormatado}</div>
-                        <div class="campo-quantidade">
-                            <input type="number" min="0" step="any" placeholder="Quantidade">
-                            <span class="unidade-texto">${produto.unidade}</span>
+            // Dentro da função carregarTudo() em script.js
+
+        // Dentro da função carregarTudo() em script.js
+
+// !!! Lembre-se de colocar a sua URL real do Cloudinary aqui !!!
+        const cloudinaryBaseUrl = "https://res.cloudinary.com/dlnk6p5ug/image/upload/";
+
+        const precoFormatado = parseFloat(produto.preco).toFixed(2);
+
+        // SUBSTITUA O BLOCO INTEIRO POR ESTE CÓDIGO ABAIXO:
+        const cardHTML = `
+            <div class="produto-card" data-codigo="${produto.codigo}" data-nome="${produto.nome}" data-unidade="${produto.unidade}" data-original="true">
+                <div class="produto-imagem">
+                    <img src="${cloudinaryBaseUrl}${produto.codigo}.png" 
+                        alt="${produto.nome}" 
+                        onerror="this.onerror=null;this.src='imagens/placeholder.png';">
+                </div>
+                <div class="produto-info">
+                    <div class="nome">${produto.nome}</div>
+                    <div class="preco-container">
+                        <div class="campo-preco-unitario">
+                            <label>Preço Unit.</label>
+                            <input type="number" min="0" step="0.01" class="campo-preco" placeholder="R$" value="${precoFormatado}">
                         </div>
-                        <div class="unidade">${produto.unidade}</div>
-                        <div class="validade-acao-wrapper">
-                            <div class="campo-validade">
-                                <input type="text" class="campo-data" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
-                            </div>
-                            <div class="acao">
-                                <button type="button" class="btn-duplicar">+</button>
-                            </div>
+                        <div class="checkboxes-container">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="campo-promocao"> Preço promocional?
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="campo-ponto-extra"> Ponto extra?
+                            </label>
+                        </div>
+                    </div>
+                    <div class="campo-quantidade">
+                        <input type="number" min="0" step="any" class="campo-qtde" placeholder="Quantidade">
+                        <span class="unidade-texto">${produto.unidade}</span>
+                    </div>
+                    <div class="unidade">${produto.unidade}</div>
+                    <div class="validade-acao-wrapper">
+                        <div class="campo-validade">
+                            <input type="text" class="campo-data" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
+                        </div>
+                        <div class="acao">
+                            <button type="button" class="btn-duplicar">+</button>
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `; // <--- O acento grave e o ponto e vírgula de fecho estão aqui.
             htmlParaInserir += cardHTML;
         });
 
@@ -273,51 +297,113 @@ async function carregarTudo() {
             }
         });
 
-        formProdutos.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const produtosParaSalvar = [];
-            const todosOsCards = document.querySelectorAll('.produto-card');
-            todosOsCards.forEach(card => {
-                const quantidadeInput = card.querySelector('input[type="number"]');
-                const validadeInput = card.querySelector('.campo-data');
-                const quantidadeValue = quantidadeInput.value.replace(',', '.');
-                const precoDoProduto = card.dataset.preco;
-                if (quantidadeValue !== '' && parseFloat(quantidadeValue) >= 0) {
-                    produtosParaSalvar.push({
-                        codigo: card.dataset.codigo,
-                        quantidade: quantidadeValue,
-                        validade: validadeInput.value || '',
-                        preco: precoDoProduto
-                    });
-                }
+// Em script.js, substitua o listener de submit inteiro por este:
+
+// --- LÓGICA DE SUBMISSÃO DO FORMULÁRIO DE PRODUTOS ---
+if (formProdutos) {
+    // Seleciona os elementos do novo modal
+    const modalConfirmacao = document.getElementById('modal-confirmacao-vazia');
+    const btnFecharModal = document.getElementById('fechar-modal-confirmacao');
+    const btnConfirmarEnvio = document.getElementById('btn-confirmar-envio');
+    const btnCancelarEnvio = document.getElementById('btn-cancelar-envio');
+
+    // Função para esconder o modal
+    const esconderModal = () => {
+        if (modalConfirmacao) modalConfirmacao.style.display = 'none';
+    };
+
+    // Adiciona eventos para fechar o modal
+    if(modalConfirmacao) {
+        btnFecharModal.addEventListener('click', esconderModal);
+        btnCancelarEnvio.addEventListener('click', esconderModal);
+        modalConfirmacao.addEventListener('click', (event) => {
+            if (event.target === modalConfirmacao) esconderModal();
+        });
+    }
+
+    // Função refatorada para enviar os dados ao servidor
+    const enviarDadosParaServidor = async (produtos) => {
+        const dadosParaEnviar = {
+            loja: new URLSearchParams(window.location.search).get('loja'),
+            nome: localStorage.getItem('usuarioNome') || '',
+            telefone: localStorage.getItem('usuarioTelefone') || '',
+            produtos: produtos
+        };
+
+        try {
+            const response = await fetch('/api/adicionar_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dadosParaEnviar)
             });
-            if (produtosParaSalvar.length === 0) {
-                alert('Nenhum item com quantidade preenchida para salvar.');
-                return;
+            if (response.ok) {
+                window.location.href = 'confirmacao.html';
+            } else {
+                const erro = await response.json();
+                alert(`Erro ao salvar: ${erro.message || 'Erro desconhecido'}`);
             }
-            const dadosParaEnviar = {
-                loja: new URLSearchParams(window.location.search).get('loja'),
-                nome: localStorage.getItem('usuarioNome') || '',
-                telefone: localStorage.getItem('usuarioTelefone') || '',
-                produtos: produtosParaSalvar
-            };
-            try {
-                const response = await fetch('/api/adicionar_item', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dadosParaEnviar)
+        } catch (error) {
+            console.error('Erro de comunicação com o servidor:', error);
+            alert('Não foi possível conectar ao servidor para salvar os dados.');
+        }
+    };
+
+    // Evento principal de submissão do formulário
+    formProdutos.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        let produtosParaSalvar = [];
+        const todosOsCards = document.querySelectorAll('.produto-card');
+
+        todosOsCards.forEach(card => {
+            const quantidadeInput = card.querySelector('.campo-qtde');
+            if (quantidadeInput.value && parseFloat(quantidadeInput.value.replace(',', '.')) > 0) {
+                produtosParaSalvar.push({
+                    codigo: card.dataset.codigo,
+                    quantidade: quantidadeInput.value.replace(',', '.'),
+                    validade: card.querySelector('.campo-data').value || '',
+                    preco: card.querySelector('.campo-preco').value.replace(',', '.'),
+                    promocao: card.querySelector('.campo-promocao').checked,
+                    ponto_extra: card.querySelector('.campo-ponto-extra').checked
                 });
-                if (response.ok) {
-                    window.location.href = 'confirmacao.html';
-                } else {
-                    const erro = await response.json();
-                    alert(`Erro ao salvar: ${erro.message || 'Erro desconhecido'}`);
-                }
-            } catch (error) {
-                console.error('Erro de comunicação com o servidor:', error);
-                alert('Não foi possível conectar ao servidor para salvar os dados.');
             }
         });
+
+        if (produtosParaSalvar.length > 0) {
+            // Se a lista NÃO está vazia, envia diretamente
+            enviarDadosParaServidor(produtosParaSalvar);
+        } else {
+            // Se a lista ESTÁ vazia, mostra o nosso modal personalizado
+            if(modalConfirmacao) modalConfirmacao.style.display = 'flex';
+        }
+    });
+
+    // Evento para o botão "Sim" do modal
+    if (btnConfirmarEnvio) {
+        btnConfirmarEnvio.addEventListener('click', () => {
+            const primeiroCard = document.querySelector('.produto-card[data-original="true"]');
+            if (primeiroCard) {
+                const hoje = new Date();
+                const dia = String(hoje.getDate()).padStart(2, '0');
+                const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                const ano = hoje.getFullYear();
+                const dataDeHoje = `${dia}/${mes}/${ano}`;
+
+                const produtoVazio = [{
+                    codigo: primeiroCard.dataset.codigo,
+                    quantidade: '0',
+                    validade: dataDeHoje,
+                    preco: primeiroCard.querySelector('.campo-preco').value.replace(',', '.'),
+                    promocao: false,
+                    ponto_extra: false
+                }];
+
+                enviarDadosParaServidor(produtoVazio);
+            }
+            esconderModal();
+        });
+    }
+}
 
         carregarTudo();
     }
@@ -384,3 +470,25 @@ async function carregarTudo() {
         });
     }
 });
+// --- LÓGICA PARA O BOTÃO FLUTUANTE ---
+const botaoFlutuante = document.getElementById('botao-flutuante');
+if (botaoFlutuante) {
+    // Mostra o botão quando o utilizador rolar a página para baixo
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) { // Aparece depois de rolar 300 pixels
+            botaoFlutuante.style.display = 'block';
+        } else {
+            botaoFlutuante.style.display = 'none';
+        }
+    });
+
+    // Adiciona uma rolagem suave ao clicar
+    botaoFlutuante.addEventListener('click', (event) => {
+        event.preventDefault();
+        const targetId = botaoFlutuante.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+}
