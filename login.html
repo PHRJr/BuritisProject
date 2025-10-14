@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acesso de Utilizador</title>
+    <title>Buritis: Sistema</title>
     <link rel="stylesheet" href="estilo.css">
     <style>
-        /* Estilos adicionais específicos para esta página, se necessário */
+        
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f2f5; /* Um fundo suave */
+            background-color: #f0f2f5;
         }
         .login-container {
             background-color: #ffffff;
@@ -43,11 +43,11 @@
             padding: 12px 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            box-sizing: border-box;
             font-size: 1em;
         }
         .login-container button {
-            background-color: #007bff; /* Cor primária do botão */
+            background-color: #007bff;
             color: white;
             padding: 12px 25px;
             border: none;
@@ -57,7 +57,7 @@
             transition: background-color 0.3s ease;
         }
         .login-container button:hover {
-            background-color: #0056b3; /* Cor mais escura no hover */
+            background-color: #0056b3;
         }
         .login-container #login-status {
             margin-top: 15px;
@@ -68,18 +68,15 @@
 <body>
 
     <div class="login-container">
-        <h1>Acesso de Utilizador</h1>
+        <h1>Acesso à plataforma</h1>
         <form id="user-login-form">
             <div class="form-group">
-                <label for="user-email">Email:</label>
-                <input type="email" id="user-email" class="input-field" required>
-            </div>
+    <label for="user-passcode">Código de Acesso:</label>
+    <input type="text" id="user-passcode" class="input-field" required>
+</div>
             <button type="submit" class="button">Entrar</button>
             <p id="user-login-status" style="color: grey; margin-top: 15px;"></p>
         </form>
-        <p style="margin-top: 20px;">
-            É administrador? <a href="login_admin.html">Aceda aqui</a>
-        </p>
     </div>
 
     <script src="login.js" defer></script>

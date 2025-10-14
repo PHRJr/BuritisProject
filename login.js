@@ -1,5 +1,3 @@
-// VERSÃO FINAL E COMPLETA DO login.js
-
 document.addEventListener('DOMContentLoaded', () => {
     const userLoginForm = document.getElementById('user-login-form');
     const userLoginStatus = document.getElementById('user-login-status');
@@ -7,34 +5,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (userLoginForm) {
         userLoginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            userLoginStatus.textContent = 'A verificar email...';
+            userLoginStatus.textContent = 'Verificando...';
             userLoginStatus.style.color = 'grey';
 
-            const email = document.getElementById('user-email').value;
+            const senha = document.getElementById('user-passcode').value;
 
-            try {
-                const response = await fetch('/api/user-login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
+try {
+    const response = await fetch('/api/user-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha }) 
+    });
 
                 const result = await response.json();
 
                 if (response.ok) {
                     // SUCESSO!
                     userLoginStatus.style.color = 'green';
-                    userLoginStatus.textContent = result.message || 'Login bem-sucedido! A redirecionar...';
-                    
-                    // Adicionamos um pequeno atraso para que o utilizador possa ler a mensagem
+                    userLoginStatus.textContent = result.message || 'Seja bem vindo!';
                     setTimeout(() => {
                         window.location.href = '/index.html';
                     }, 1000); // 1 segundo de atraso
 
                 } else {
-                    // ERRO (ex: email não autorizado)
+                    // ERRO
                     userLoginStatus.style.color = 'red';
-                    userLoginStatus.textContent = result.message || 'Erro ao tentar aceder.';
+                    userLoginStatus.textContent = result.message || 'Usuário não encontrado.';
                 }
             } catch (error) {
                 console.error('Erro de conexão:', error);
