@@ -17,6 +17,7 @@
     "express-session": "^1.18.2",
     "json2csv": "^6.0.0-alpha.2",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "pg-copy-streams": "^7.0.0"
   }
 }

@@ -30,16 +30,21 @@
                 <strong>Atenção:</strong> Esta ação irá substituir TODOS os dados atuais pela nova relação encontrada nos arquivos.
             </p>
             <form id="upload-form">
-                <div class="form-group">
-                    <label for="produtos-csv">Lista de produtos (produtos.csv):</label>
-                    <input type="file" id="produtos-csv" name="produtosCsvFile" class="input-field" accept=".csv" required>
-                </div>
-                <div class="form-group">
-                    <label for="lojas-csv">Relação de redes, lojas e produtos (lojas.csv):</label>
-                    <input type="file" id="lojas-csv" name="lojasCsvFile" class="input-field" accept=".csv" required>
-                </div>
-                <button type="submit" class="button">Atualizar relação</button>
-            </form>
+    <div class="form-group">
+        <label for="produtos-csv">Arquivo de Produtos (produtos.csv):</label>
+        <input type="file" id="produtos-csv" name="produtosCsvFile" class="input-field" accept=".csv" required>
+    </div>
+
+    <div class="form-group">
+        <label for="redes-lojas-csv">Arquivo de Redes e Lojas (redes_lojas.csv):</label>
+        <input type="file" id="redes-lojas-csv" name="redesLojasCsvFile" class="input-field" accept=".csv" required>
+    </div>
+    <div class="form-group">
+        <label for="lojas-csv">Arquivo de Relações Rede-Produto (rede_produtos.csv):</label>
+        <input type="file" id="rede-produtos-csv" name="lojasCsvFile" class="input-field" accept=".csv" required>
+    </div>
+    <button type="submit" class="button">Atualizar Dados</button>
+</form>
             <div id="status-message" style="margin-top: 15px; font-weight: bold;"></div>
         </div>
 

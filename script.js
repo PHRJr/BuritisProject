@@ -99,84 +99,168 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // DENTRO DO SEU public/script.js, SUBSTITUA O BLOCO if (formInicio)
 
-    const formInicio = document.getElementById('form-inicio');
-    if (formInicio) {
-        // 1. Declaramos uma variável para guardar a instância da Choices.js
-        let choicesInstance = null;
+// Em script.js, substitua o bloco "if (formInicio)" inteiro:
 
-        const formStatus = document.getElementById('form-status');
-        const telefoneInput = document.getElementById('telefone');
-        telefoneInput.addEventListener('input', () => formatarTelefone(telefoneInput));
+// Em script.js, substitua o bloco "if (formInicio)" inteiro por esta versão completa:
 
-        async function carregarLojas() {
-            try {
-                // Prevenção de reinicialização
-                const selectLojaElement = document.getElementById('loja');
-                if (selectLojaElement.classList.contains('choices__input')) {
-                    return; 
-                }
+const formInicio = document.getElementById('form-inicio');
+if (formInicio) {
 
-                const response = await fetch('/api/lojas');
-                if (!response.ok) throw new Error('Não foi possível carregar a lista de lojas.');
-                const lojas = await response.json();
-                
-                selectLojaElement.innerHTML = '<option value="">Selecione ou digite uma loja</option>';
+    const redeSelect = document.getElementById('rede');
+    const lojaSelect = document.getElementById('loja'); // Elemento Loja é necessário novamente
+    const formStatus = document.getElementById('form-status');
+    const telefoneInput = document.getElementById('telefone');
 
-                lojas.forEach(nomeLoja => {
-                    const option = document.createElement('option');
-                    option.value = nomeLoja;
-                    option.textContent = nomeLoja;
-                    selectLojaElement.appendChild(option);
-                });
+    // Instâncias do Choices.js para ambos
+    let redeChoices = null;
+    let lojaChoices = null; // Choices para Loja é necessário novamente
 
-                // 2. Guardamos a instância na nossa variável
-                choicesInstance = new Choices(selectLojaElement, {
+    telefoneInput.addEventListener('input', () => formatarTelefone(telefoneInput));
+
+    // Função para carregar as REDES
+    async function carregarRedes() {
+        try {
+            const response = await fetch('/api/redes');
+            if (!response.ok) throw new Error('Não foi possível carregar a lista de redes.');
+
+            const redes = await response.json();
+
+            redeSelect.innerHTML = '<option value="">Selecione ou digite uma rede</option>';
+            redes.forEach(nomeRede => {
+                const option = document.createElement('option');
+                option.value = nomeRede;
+                option.textContent = nomeRede;
+                redeSelect.appendChild(option);
+            });
+
+            // Adiciona a opção "REDE NÃO ENCONTRADA"
+            const optionNaoEncontradaRede = document.createElement('option');
+            optionNaoEncontradaRede.value = "REDE NÃO ENCONTRADA";
+            optionNaoEncontradaRede.textContent = "REDE NÃO ENCONTRADA";
+            redeSelect.appendChild(optionNaoEncontradaRede);
+
+
+            // Inicializa o Choices para Redes
+            redeChoices = new Choices(redeSelect, {
+                searchPlaceholderValue: "Digite para pesquisar...",
+                itemSelectText: "Pressione Enter",
+                noResultsText: "Nenhuma rede encontrada",
+                removeItemButton: true
+            });
+
+            // Inicializa o Choices para Lojas (começa desabilitado)
+            // Certifique-se que o elemento <select id="loja"> existe no HTML
+            if (lojaSelect) {
+                 lojaChoices = new Choices(lojaSelect, {
                     searchPlaceholderValue: "Digite para pesquisar...",
-                    itemSelectText: "Pressione Enter para selecionar",
+                    itemSelectText: "Pressione Enter",
                     noResultsText: "Nenhuma loja encontrada",
                     removeItemButton: true
                 });
-
-            } catch (error) {
-                console.error('Erro ao carregar lojas:', error);
-                const selectLoja = document.getElementById('loja');
-                selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
-            }
-        }
-
-        function carregarDadosUsuario() {
-            const nomeSalvo = localStorage.getItem('usuarioNome');
-            const telefoneSalvo = localStorage.getItem('usuarioTelefone');
-            if (nomeSalvo) document.getElementById('nome').value = nomeSalvo;
-            if (telefoneSalvo) document.getElementById('telefone').value = telefoneSalvo;
-        }
-
-        formInicio.addEventListener('submit', (event) => {
-            event.preventDefault();
-            formStatus.textContent = '';
-            formStatus.style.color = '';
-
-            // 3. Para obter o valor, perguntamos diretamente à instância da Choices.js
-            const loja = choicesInstance ? choicesInstance.getValue(true) : '';
-
-            // A nossa verificação manual agora usa este valor correto
-            if (!loja) {
-                formStatus.textContent = 'Por favor, selecione uma loja para continuar.';
-                formStatus.style.color = 'red';
-                return;
+                 // Começa desabilitado
+                 lojaChoices.disable(); 
             }
 
-            const nome = document.getElementById('nome').value;
-            const telefone = document.getElementById('telefone').value;
-            
-            localStorage.setItem('usuarioNome', nome);
-            localStorage.setItem('usuarioTelefone', telefone);
-            window.location.href = `produtos.html?loja=${loja}`;
-        });
 
-        carregarLojas();
-        carregarDadosUsuario();
+        } catch (error) {
+            console.error('Erro ao carregar redes:', error);
+            redeSelect.innerHTML = '<option value="">Erro ao carregar redes</option>';
+        }
     }
+
+    // --- RESTAURAR ESTA FUNÇÃO ---
+    // Função para carregar LOJAS filtradas pela REDE
+    async function carregarLojasPorRede(nomeRede) {
+        if (!lojaChoices) return; // Sai se o Choices de loja não foi inicializado
+
+        // Limpa e desabilita o dropdown de lojas
+        lojaChoices.disable();
+        lojaChoices.clearStore();
+        lojaChoices.setChoices([{ value: '', label: 'Carregando lojas...', selected: true, disabled: true }]);
+
+        if (!nomeRede) {
+            lojaChoices.setChoices([{ value: '', label: 'Selecione uma rede primeiro', selected: true, disabled: true }]);
+            return;
+        }
+
+        try {
+            // --- USA A API CORRETA --- (Verifique se a rota /api/lojas existe no server.js e aceita ?rede=)
+            const response = await fetch(`/api/lojas?rede=${encodeURIComponent(nomeRede)}`);
+            if (!response.ok) throw new Error('Não foi possível carregar as lojas.');
+
+            const lojas = await response.json();
+
+            const opcoesLojas = lojas.map(nomeLoja => ({
+                value: nomeLoja,
+                label: nomeLoja
+            }));
+
+            const opcaoNaoEncontradaLoja = { value: "LOJA NÃO ENCONTRADA", label: "LOJA NÃO ENCONTRADA" };
+
+            // Habilita e preenche o dropdown de lojas
+            lojaChoices.enable(); // <-- HABILITA O CAMPO
+            lojaChoices.setChoices(
+                [
+                    { value: '', label: 'Selecione ou digite uma loja' },
+                    ...opcoesLojas,
+                    opcaoNaoEncontradaLoja
+                ],
+                'value', 'label', true
+            );
+
+        } catch (error) {
+            console.error('Erro ao carregar lojas:', error);
+            lojaChoices.setChoices([{ value: '', label: 'Erro ao carregar lojas', selected: true, disabled: true }]);
+        }
+    }
+
+    // --- RESTAURAR ESTE EVENT LISTENER ---
+    // Evento: Quando o utilizador MUDA a rede selecionada
+    redeSelect.addEventListener('change', (event) => {
+        const redeSelecionada = event.target.value;
+        carregarLojasPorRede(redeSelecionada);
+    });
+
+    // Carrega os dados do utilizador (nome/telefone)
+    function carregarDadosUsuario() { /* ... código existente ... */ }
+
+    // Evento: Submissão do formulário (precisa validar Loja novamente)
+    formInicio.addEventListener('submit', (event) => {
+        event.preventDefault();
+        formStatus.textContent = '';
+        formStatus.style.color = '';
+
+        const rede = redeChoices ? redeChoices.getValue(true) : '';
+        const loja = lojaChoices ? lojaChoices.getValue(true) : ''; // Lê o valor da loja
+
+        if (!rede) {
+            formStatus.textContent = 'Por favor, selecione uma rede.';
+            formStatus.style.color = 'red';
+            return;
+        }
+        // --- RESTAURAR ESTA VALIDAÇÃO ---
+        if (!loja) {
+            formStatus.textContent = 'Por favor, selecione uma loja para continuar.';
+            formStatus.style.color = 'red';
+            return;
+        }
+
+        const nome = document.getElementById('nome').value;
+        const telefone = document.getElementById('telefone').value;
+        const observacao = document.getElementById('observacao').value;
+
+        localStorage.setItem('usuarioNome', nome);
+        localStorage.setItem('usuarioTelefone', telefone);
+        localStorage.setItem('usuarioObservacao', observacao);
+
+        // --- RESTAURAR PASSAGEM DO PARÂMETRO 'loja' ---
+        window.location.href = `produtos.html?rede=${rede}&loja=${loja}`;
+    });
+
+    carregarRedes(); // Carrega as redes e inicializa ambos Choices
+    carregarDadosUsuario();
+} // Fim do if (formInicio)
+
 
     // --- LÓGICA DA PÁGINA DE PRODUTOS (PRODUTOS.HTML) ---
     const formProdutos = document.getElementById('form-produtos');
@@ -322,13 +406,15 @@ if (formProdutos) {
     }
 
     // Função refatorada para enviar os dados ao servidor
-    const enviarDadosParaServidor = async (produtos) => {
-        const dadosParaEnviar = {
-            loja: new URLSearchParams(window.location.search).get('loja'),
-            nome: localStorage.getItem('usuarioNome') || '',
-            telefone: localStorage.getItem('usuarioTelefone') || '',
-            produtos: produtos
-        };
+const enviarDadosParaServidor = async (produtos) => {
+    const dadosParaEnviar = {
+        rede: new URLSearchParams(window.location.search).get('rede'), // Ou 'loja' se reverteu
+        nome: localStorage.getItem('usuarioNome') || '',
+        telefone: localStorage.getItem('usuarioTelefone') || '',
+        // --- ADICIONAR ESTA LINHA ---
+        observacao: localStorage.getItem('usuarioObservacao') || '', // Ler a observação
+        produtos: produtos
+    };
 
         try {
             const response = await fetch('/api/adicionar_item', {

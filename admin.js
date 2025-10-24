@@ -5,34 +5,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (uploadForm) {
         uploadForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const produtosFile = document.getElementById('produtos-csv').files[0];
-            const lojasFile = document.getElementById('lojas-csv').files[0];
-            const formData = new FormData();
-            formData.append('produtosCsvFile', produtosFile);
-            formData.append('lojasCsvFile', lojasFile);
+    event.preventDefault();
+    const produtosFile = document.getElementById('produtos-csv').files[0];
+    // Obtém os novos arquivos pelos IDs corretos
+    const redesLojasFile = document.getElementById('redes-lojas-csv').files[0]; 
+    const redeProdutosFile = document.getElementById('rede-produtos-csv').files[0]; // Nome novo do ID
 
-            statusMessage.textContent = 'Sincronizando alterações...';
-            statusMessage.style.color = 'black';
+    const formData = new FormData();
+    formData.append('produtosCsvFile', produtosFile);
+    formData.append('redesLojasCsvFile', redesLojasFile); // Adiciona o novo arquivo
+    formData.append('lojasCsvFile', redeProdutosFile); // Usa o nome antigo 'lojasCsvFile' para o backend
 
-            try {
-                const response = await fetch('/api/atualizar-dados', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    statusMessage.style.color = 'green';
-                    uploadForm.reset();
-                } else {
-                    statusMessage.style.color = 'red';
-                }
-                statusMessage.textContent = result.message;
-            } catch (error) {
-                statusMessage.style.color = 'red';
-                statusMessage.textContent = 'Erro de conexão com o servidor.';
-            }
+    statusMessage.textContent = 'A enviar arquivos...';
+    statusMessage.style.color = 'black';
+
+    try {
+        const response = await fetch('/api/atualizar-dados', {
+            method: 'POST',
+            body: formData
         });
+        const result = await response.json();
+        if (response.ok) {
+            statusMessage.style.color = 'green';
+            uploadForm.reset();
+        } else {
+            statusMessage.style.color = 'red';
+        }
+        statusMessage.textContent = result.message;
+    } catch (error) {
+        statusMessage.style.color = 'red';
+        statusMessage.textContent = 'Erro de conexão com o servidor.';
+    }
+});
     }
 
     const exportBtn = document.getElementById('export-btn');
