@@ -304,8 +304,71 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 .close-button:hover { color: #333; }
 .modal-content h2 { margin-top: 0; }
 
-/* --- AJUSTES FINAIS PARA O CHOICES.JS --- */
-.form-group .choices { margin-bottom: 0; }
-.form-group .choices__inner { background-color: white; border: 1px solid var(--cor-borda); border-radius: 4px; padding: 12px; font-size: 1em; min-height: auto; width: 100%; }
-.form-group .choices__list--dropdown { border-color: var(--cor-borda); border-radius: 4px; }
-.is-open .choices__inner { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+/* --- ESTILOS PARA O DROPDOWN DE BUSCA CUSTOMIZADO --- */
+
+/* Ajusta o form-group para permitir posicionamento absoluto */
+.form-group {
+    position: relative;
+}
+
+/* O nosso input de busca customizado */
+.custom-search-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    font-size: 1em;
+    background-color: white;
+}
+
+/* O container das opções */
+.options-container {
+    position: absolute;
+    top: 100%; /* Posiciona logo abaixo do form-group */
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1001; /* Garante que fica por cima de outros elementos */
+}
+
+/* Cada item na lista de opções */
+.option-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.option-item:hover,
+.option-item.highlight { /* 'highlight' para navegação por teclado (opcional) */
+    background-color: #f0f0f0;
+}
+
+/* A nossa opção "pegajosa" (sticky) */
+.sticky-option {
+    font-weight: bold;
+    color: #333;
+    background-color: #f9f9f9;
+    border-top: 1px solid #eee;
+}
+
+/* Classe para esconder/mostrar elementos */
+.hidden {
+    display: none;
+}
+/* Impedir redimensionamento da textarea de Observação */
+#observacao {
+    resize: none; 
+}
+
+/* Opcional: Se quiser aplicar a todas as textareas do site */
+/*
+textarea {
+    resize: none;
+}
+*/

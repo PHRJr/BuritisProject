@@ -103,142 +103,198 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Em script.js, substitua o bloco "if (formInicio)" inteiro por esta versão completa:
 
+// =========================================================
+// INÍCIO DO NOVO BLOCO "formInicio" (SEM CHOICES.JS)
+// =========================================================
+
 const formInicio = document.getElementById('form-inicio');
 if (formInicio) {
 
-    const redeSelect = document.getElementById('rede');
-    const lojaSelect = document.getElementById('loja'); // Elemento Loja é necessário novamente
+    // --- Selecionar os novos elementos ---
+    const redeSearchInput = document.getElementById('rede-search');
+    const redeHiddenInput = document.getElementById('rede-hidden');
+    const redeOptionsContainer = document.getElementById('rede-options');
+    
+    const lojaSearchInput = document.getElementById('loja-search');
+    const lojaHiddenInput = document.getElementById('loja-hidden');
+    const lojaOptionsContainer = document.getElementById('loja-options');
+
     const formStatus = document.getElementById('form-status');
     const telefoneInput = document.getElementById('telefone');
 
-    // Instâncias do Choices.js para ambos
-    let redeChoices = null;
-    let lojaChoices = null; // Choices para Loja é necessário novamente
-
     telefoneInput.addEventListener('input', () => formatarTelefone(telefoneInput));
 
-    // Função para carregar as REDES
+    let todasAsRedes = [];
+    let todasAsLojas = [];
+
+    // --- Função para popular o dropdown de Redes ---
+    function popularRedes(listaRedes) {
+        // Limpa apenas as opções antigas, mantendo a "sticky-option"
+        redeOptionsContainer.querySelectorAll('.option-item:not(.sticky-option)').forEach(el => el.remove());
+        
+        const stickyOption = redeOptionsContainer.querySelector('.sticky-option');
+        
+        listaRedes.forEach(nomeRede => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.textContent = nomeRede;
+            div.dataset.value = nomeRede;
+            // Insere antes da opção sticky
+            redeOptionsContainer.insertBefore(div, stickyOption);
+        });
+    }
+
+    // --- Função para popular o dropdown de Lojas ---
+    function popularLojas(listaLojas) {
+        lojaOptionsContainer.querySelectorAll('.option-item:not(.sticky-option)').forEach(el => el.remove());
+        const stickyOption = lojaOptionsContainer.querySelector('.sticky-option');
+        
+        listaLojas.forEach(nomeLoja => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.textContent = nomeLoja;
+            div.dataset.value = nomeLoja;
+            lojaOptionsContainer.insertBefore(div, stickyOption);
+        });
+    }
+
+    // --- Carregar as Redes da API ---
     async function carregarRedes() {
         try {
             const response = await fetch('/api/redes');
             if (!response.ok) throw new Error('Não foi possível carregar a lista de redes.');
-
-            const redes = await response.json();
-
-            redeSelect.innerHTML = '<option value="">Selecione ou digite uma rede</option>';
-            redes.forEach(nomeRede => {
-                const option = document.createElement('option');
-                option.value = nomeRede;
-                option.textContent = nomeRede;
-                redeSelect.appendChild(option);
-            });
-
-            // Adiciona a opção "REDE NÃO ENCONTRADA"
-            const optionNaoEncontradaRede = document.createElement('option');
-            optionNaoEncontradaRede.value = "REDE NÃO ENCONTRADA";
-            optionNaoEncontradaRede.textContent = "REDE NÃO ENCONTRADA";
-            redeSelect.appendChild(optionNaoEncontradaRede);
-
-
-            // Inicializa o Choices para Redes
-            redeChoices = new Choices(redeSelect, {
-                searchPlaceholderValue: "Digite para pesquisar...",
-                itemSelectText: "Pressione Enter",
-                noResultsText: "Nenhuma rede encontrada",
-                removeItemButton: true
-            });
-
-            // Inicializa o Choices para Lojas (começa desabilitado)
-            // Certifique-se que o elemento <select id="loja"> existe no HTML
-            if (lojaSelect) {
-                 lojaChoices = new Choices(lojaSelect, {
-                    searchPlaceholderValue: "Digite para pesquisar...",
-                    itemSelectText: "Pressione Enter",
-                    noResultsText: "Nenhuma loja encontrada",
-                    removeItemButton: true
-                });
-                 // Começa desabilitado
-                 lojaChoices.disable(); 
-            }
-
+            
+            todasAsRedes = await response.json();
+            popularRedes(todasAsRedes);
 
         } catch (error) {
             console.error('Erro ao carregar redes:', error);
-            redeSelect.innerHTML = '<option value="">Erro ao carregar redes</option>';
+            redeSearchInput.placeholder = "Erro ao carregar redes";
         }
     }
 
-    // --- RESTAURAR ESTA FUNÇÃO ---
-    // Função para carregar LOJAS filtradas pela REDE
+    // --- Carregar Lojas da API com base na Rede ---
     async function carregarLojasPorRede(nomeRede) {
-        if (!lojaChoices) return; // Sai se o Choices de loja não foi inicializado
-
-        // Limpa e desabilita o dropdown de lojas
-        lojaChoices.disable();
-        lojaChoices.clearStore();
-        lojaChoices.setChoices([{ value: '', label: 'Carregando lojas...', selected: true, disabled: true }]);
-
+        // Limpa e desabilita o campo de lojas
+        lojaSearchInput.value = '';
+        lojaHiddenInput.value = '';
+        lojaSearchInput.placeholder = 'Carregando lojas...';
+        popularLojas([]); // Limpa a lista
+        
         if (!nomeRede) {
-            lojaChoices.setChoices([{ value: '', label: 'Selecione uma rede primeiro', selected: true, disabled: true }]);
+            lojaSearchInput.placeholder = 'Selecione uma rede primeiro';
+            lojaSearchInput.disabled = true;
             return;
         }
 
         try {
-            // --- USA A API CORRETA --- (Verifique se a rota /api/lojas existe no server.js e aceita ?rede=)
             const response = await fetch(`/api/lojas?rede=${encodeURIComponent(nomeRede)}`);
             if (!response.ok) throw new Error('Não foi possível carregar as lojas.');
-
-            const lojas = await response.json();
-
-            const opcoesLojas = lojas.map(nomeLoja => ({
-                value: nomeLoja,
-                label: nomeLoja
-            }));
-
-            const opcaoNaoEncontradaLoja = { value: "LOJA NÃO ENCONTRADA", label: "LOJA NÃO ENCONTRADA" };
-
-            // Habilita e preenche o dropdown de lojas
-            lojaChoices.enable(); // <-- HABILITA O CAMPO
-            lojaChoices.setChoices(
-                [
-                    { value: '', label: 'Selecione ou digite uma loja' },
-                    ...opcoesLojas,
-                    opcaoNaoEncontradaLoja
-                ],
-                'value', 'label', true
-            );
+            
+            todasAsLojas = await response.json();
+            popularLojas(todasAsLojas);
+            lojaSearchInput.disabled = false;
+            lojaSearchInput.placeholder = 'Selecione ou digite uma loja';
 
         } catch (error) {
             console.error('Erro ao carregar lojas:', error);
-            lojaChoices.setChoices([{ value: '', label: 'Erro ao carregar lojas', selected: true, disabled: true }]);
+            lojaSearchInput.placeholder = "Erro ao carregar lojas";
+            lojaSearchInput.disabled = false;
         }
     }
 
-    // --- RESTAURAR ESTE EVENT LISTENER ---
-    // Evento: Quando o utilizador MUDA a rede selecionada
-    redeSelect.addEventListener('change', (event) => {
-        const redeSelecionada = event.target.value;
-        carregarLojasPorRede(redeSelecionada);
+    // --- LÓGICA DE EVENTOS (A MAGIA ACONTECE AQUI) ---
+
+    // Função genérica de filtro (ESTA É A LÓGICA CHAVE)
+    function filtrarOpcoes(input, container) {
+        const filtro = input.value.toLowerCase();
+        const opcoes = container.querySelectorAll('.option-item');
+        
+        opcoes.forEach(opcao => {
+            // Se for a opção "pegajosa" (sticky), ignora e nunca esconde
+            if (opcao.classList.contains('sticky-option')) {
+                return; // Deixa sempre visível
+            }
+            
+            // Esconde ou mostra as outras opções
+            const texto = opcao.textContent.toLowerCase();
+            if (texto.includes(filtro)) {
+                opcao.classList.remove('hidden');
+            } else {
+                opcao.classList.add('hidden');
+            }
+        });
+    }
+
+    // --- Eventos para o dropdown de REDES ---
+    redeSearchInput.addEventListener('focus', () => {
+        redeOptionsContainer.classList.remove('hidden');
+        filtrarOpcoes(redeSearchInput, redeOptionsContainer); // Mostra todas ao focar
+    });
+    redeSearchInput.addEventListener('input', () => {
+        filtrarOpcoes(redeSearchInput, redeOptionsContainer);
+        // Limpa a seleção se o utilizador estiver a digitar
+        redeHiddenInput.value = ''; 
+    });
+    redeOptionsContainer.addEventListener('mousedown', (e) => { // mousedown é melhor que click
+        if (e.target.classList.contains('option-item')) {
+            const valor = e.target.dataset.value;
+            redeSearchInput.value = e.target.textContent;
+            redeHiddenInput.value = valor;
+            redeOptionsContainer.classList.add('hidden');
+            // Carrega as lojas correspondentes
+            carregarLojasPorRede(valor);
+        }
     });
 
-    // Carrega os dados do utilizador (nome/telefone)
-    function carregarDadosUsuario() { /* ... código existente ... */ }
+    // --- Eventos para o dropdown de LOJAS ---
+    lojaSearchInput.addEventListener('focus', () => {
+        lojaOptionsContainer.classList.remove('hidden');
+        filtrarOpcoes(lojaSearchInput, lojaOptionsContainer);
+    });
+    lojaSearchInput.addEventListener('input', () => {
+        filtrarOpcoes(lojaSearchInput, lojaOptionsContainer);
+        lojaHiddenInput.value = '';
+    });
+    lojaOptionsContainer.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('option-item')) {
+            const valor = e.target.dataset.value;
+            lojaSearchInput.value = e.target.textContent;
+            lojaHiddenInput.value = valor;
+            lojaOptionsContainer.classList.add('hidden');
+        }
+    });
 
-    // Evento: Submissão do formulário (precisa validar Loja novamente)
+    // --- Esconder os dropdowns se clicar fora ---
+    document.addEventListener('click', (e) => {
+        if (!formInicio.contains(e.target)) {
+            redeOptionsContainer.classList.add('hidden');
+            lojaOptionsContainer.classList.add('hidden');
+        }
+    });
+
+    // --- Carregar dados do utilizador (Nome/Telefone) ---
+    function carregarDadosUsuario() { 
+        const nome = localStorage.getItem('usuarioNome');
+        const telefone = localStorage.getItem('usuarioTelefone');
+        if (nome) document.getElementById('nome').value = nome;
+        if (telefone) document.getElementById('telefone').value = telefone;
+    }
+
+    // --- Submissão do Formulário ---
     formInicio.addEventListener('submit', (event) => {
         event.preventDefault();
         formStatus.textContent = '';
         formStatus.style.color = '';
 
-        const rede = redeChoices ? redeChoices.getValue(true) : '';
-        const loja = lojaChoices ? lojaChoices.getValue(true) : ''; // Lê o valor da loja
+        const rede = redeHiddenInput.value; // Pega o valor do input escondido
+        const loja = lojaHiddenInput.value; // Pega o valor do input escondido
 
         if (!rede) {
             formStatus.textContent = 'Por favor, selecione uma rede.';
             formStatus.style.color = 'red';
             return;
         }
-        // --- RESTAURAR ESTA VALIDAÇÃO ---
         if (!loja) {
             formStatus.textContent = 'Por favor, selecione uma loja para continuar.';
             formStatus.style.color = 'red';
@@ -253,13 +309,16 @@ if (formInicio) {
         localStorage.setItem('usuarioTelefone', telefone);
         localStorage.setItem('usuarioObservacao', observacao);
 
-        // --- RESTAURAR PASSAGEM DO PARÂMETRO 'loja' ---
         window.location.href = `produtos.html?rede=${rede}&loja=${loja}`;
     });
 
-    carregarRedes(); // Carrega as redes e inicializa ambos Choices
+    // --- Iniciar tudo ---
+    carregarRedes();
     carregarDadosUsuario();
-} // Fim do if (formInicio)
+}
+// =========================================================
+// FIM DO NOVO BLOCO "formInicio"
+// =========================================================
 
 
     // --- LÓGICA DA PÁGINA DE PRODUTOS (PRODUTOS.HTML) ---
@@ -267,86 +326,130 @@ if (formInicio) {
     if (formProdutos) {
 // DENTRO DO SEU script.js, SUBSTITUA A FUNÇÃO carregarTudo INTEIRA
 
+// Em script.js, substitua a função carregarTudo inteira:
+
 async function carregarTudo() {
     const urlParams = new URLSearchParams(window.location.search);
+    const nomeRede = urlParams.get('rede');
     const nomeLoja = urlParams.get('loja');
-    if (!nomeLoja) {
-        document.getElementById('titulo-loja').textContent = "Loja não encontrada";
-        return;
+
+    // --- CORREÇÃO: Mover declarações para o TOPO da função ---
+    const tituloElement = document.getElementById('titulo-loja');
+    const containerProdutos = document.getElementById('lista-produtos');
+    // --- FIM DA CORREÇÃO ---
+
+if (nomeRede) {
+    // Modifique esta parte
+    let titulo = `Produtos da Rede: ${nomeRede}`;
+    if (nomeLoja) { // Adiciona a loja se existir
+        titulo += ` (Loja: ${nomeLoja})`;
     }
-    document.getElementById('titulo-loja').textContent = `Produtos da ${nomeLoja}`;
+    // Adiciona um aviso se a rede for a genérica ou se for um fallback (podemos inferir isso se a lista for muito grande, mas é mais complexo)
+    // Uma forma simples é verificar se a rede é a "Não Encontrada"
+    if (nomeRede === "REDE NÃO ENCONTRADA") {
+        titulo += " (Exibindo TODOS os produtos)";
+    }
+    tituloElement.textContent = titulo;
+
+} else {
+    // ... (código existente para rede não especificada) ...
+}
+    //const containerProdutos = document.getElementById('lista-produtos');
+
+    // Atualiza o título da página usando a Rede (e a Loja se disponível)
+    if (nomeRede) {
+        tituloElement.textContent = `Produtos da Rede: ${nomeRede}` + (nomeLoja ? ` (Loja: ${nomeLoja})` : '');
+    } else {
+        tituloElement.textContent = "Rede não especificada";
+        containerProdutos.innerHTML = '<p style="color: red; text-align: center;">Erro: Nenhuma rede foi selecionada na página anterior.</p>';
+        return; // Interrompe se não houver rede
+    }
 
     try {
-        const response = await fetch(`/api/produtos?loja=${nomeLoja}`);
-        if (!response.ok) throw new Error('Não foi possível carregar os produtos do servidor.');
-        
-        const produtosDaLoja = await response.json();
-        const containerProdutos = document.getElementById('lista-produtos');
-        let htmlParaInserir = '';
+        // CORREÇÃO: Chamamos a API /api/produtos_por_rede, filtrando pela 'rede'
+        const response = await fetch(`/api/produtos_por_rede?rede=${encodeURIComponent(nomeRede)}`);
 
-        produtosDaLoja.forEach(produto => {
-            // ESTA É A VERSÃO CORRIGIDA DO HTML, SEM OS TÍTULOS
-            // Dentro da função carregarTudo() em script.js
+        if (!response.ok) {
+             const errorData = await response.json().catch(() => ({ message: `Erro ${response.status} ao buscar produtos.` }));
+             throw new Error(errorData.message || `Não foi possível carregar os produtos (${response.status})`);
+        }
 
-        // Dentro da função carregarTudo() em script.js
-
-// !!! Lembre-se de colocar a sua URL real do Cloudinary aqui !!!
-        const cloudinaryBaseUrl = "https://res.cloudinary.com/dlnk6p5ug/image/upload/";
-
-        const precoFormatado = parseFloat(produto.preco).toFixed(2);
-
-        // SUBSTITUA O BLOCO INTEIRO POR ESTE CÓDIGO ABAIXO:
-        const cardHTML = `
-            <div class="produto-card" data-codigo="${produto.codigo}" data-nome="${produto.nome}" data-unidade="${produto.unidade}" data-original="true">
-                <div class="produto-imagem">
-                    <img src="${cloudinaryBaseUrl}${produto.codigo}.png" 
-                        alt="${produto.nome}" 
-                        onerror="this.onerror=null;this.src='imagens/placeholder.png';">
-                </div>
-                <div class="produto-info">
-                    <div class="nome">${produto.nome}</div>
-                    <div class="preco-container">
-                        <div class="campo-preco-unitario">
-                            <label>Preço Unit.</label>
-                            <input type="number" min="0" step="0.01" class="campo-preco" placeholder="R$" value="${precoFormatado}">
-                        </div>
-                        <div class="checkboxes-container">
-                            <label class="checkbox-label">
-                                <input type="checkbox" class="campo-promocao"> Preço promocional?
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" class="campo-ponto-extra"> Ponto extra?
-                            </label>
-                        </div>
-                    </div>
-                    <div class="campo-quantidade">
-                        <input type="number" min="0" step="any" class="campo-qtde" placeholder="Quantidade">
-                        <span class="unidade-texto">${produto.unidade}</span>
-                    </div>
-                    <div class="unidade">${produto.unidade}</div>
-                    <div class="validade-acao-wrapper">
-                        <div class="campo-validade">
-                            <input type="text" class="campo-data" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
-                        </div>
-                        <div class="acao">
-                            <button type="button" class="btn-duplicar">+</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `; // <--- O acento grave e o ponto e vírgula de fecho estão aqui.
-            htmlParaInserir += cardHTML;
-        });
+        const produtosDaRede = await response.json(); // Renomeado para clareza
 
         // Limpa apenas os cartões de produto antigos, preservando o cabeçalho
         containerProdutos.querySelectorAll('.produto-card').forEach(card => card.remove());
-        // Adiciona os novos cartões no final, depois do cabeçalho.
+
+        if (produtosDaRede.length === 0) {
+             containerProdutos.insertAdjacentHTML('beforeend', '<p style="text-align: center; margin-top: 20px;">Nenhum produto encontrado para esta rede.</p>');
+             return;
+        }
+
+        let htmlParaInserir = '';
+        // !!! Lembre-se de colocar a sua URL real do Cloudinary aqui !!!
+        const cloudinaryBaseUrl = "https://res.cloudinary.com/SUA_CLOUD/image/upload/";
+
+        produtosDaRede.forEach(produto => { // Iterar sobre produtosDaRede
+            // Define o precoFormatado DENTRO do loop
+            const precoFormatado = parseFloat(produto.preco).toFixed(2);
+            // O HTML do card (sem alterações na estrutura interna)
+            const cardHTML = `
+                <div class="produto-card" data-codigo="${produto.codigo}" data-nome="${produto.nome}" data-unidade="${produto.unidade}" data-original="true">
+                    <div class="produto-imagem">
+                        <img src="${cloudinaryBaseUrl}${produto.codigo}.png"
+                             alt="${produto.nome}"
+                             onerror="this.onerror=null;this.src='imagens/placeholder.png';">
+                    </div>
+                    <div class="produto-info">
+                        <div class="nome">${produto.nome}</div>
+                        <div class="preco-container">
+                            <div class="campo-preco-unitario">
+                                <label>Preço Unit.</label>
+                                <input type="number" min="0" step="0.01" class="campo-preco" placeholder="R$" value="${precoFormatado}">
+                            </div>
+                            <div class="checkboxes-container">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="campo-promocao"> Preço promocional?
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="campo-ponto-extra"> Ponto extra?
+                                </label>
+                            </div>
+                        </div>
+                        <div class="campo-quantidade">
+                            <input type="number" min="0" step="any" class="campo-qtde" placeholder="Quantidade">
+                            <span class="unidade-texto">${produto.unidade}</span>
+                        </div>
+                        <div class="unidade">${produto.unidade}</div>
+                        <div class="validade-acao-wrapper">
+                            <div class="campo-validade">
+                                <input type="text" class="campo-data" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
+                            </div>
+                            <div class="acao">
+                                <button type="button" class="btn-duplicar">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            htmlParaInserir += cardHTML;
+        });
+
+        // Adiciona os novos cartões no final.
         containerProdutos.insertAdjacentHTML('beforeend', htmlParaInserir);
 
     } catch (error) {
         console.error("Erro ao carregar produtos:", error);
-        document.getElementById('lista-produtos').innerHTML = '<p style="color: red; text-align: center;">Ocorreu um erro ao carregar os produtos.</p>';
+        containerProdutos.querySelectorAll('.produto-card').forEach(card => card.remove());
+        containerProdutos.insertAdjacentHTML('beforeend', `<p style="color: red; text-align: center;">Ocorreu um erro ao carregar os produtos: ${error.message}</p>`);
     }
+}
+
+// Garante que a função seja chamada quando o DOM estiver pronto
+if (document.getElementById('form-produtos')) {
+    // Remove qualquer listener antigo para evitar duplicação
+    document.removeEventListener('DOMContentLoaded', carregarTudo);
+    // Adiciona o listener atualizado
+    document.addEventListener('DOMContentLoaded', carregarTudo);
 }
 
         const containerLista = document.getElementById('lista-produtos');

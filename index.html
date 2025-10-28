@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página Inicial - Seleção de Loja</title>
     <link rel="stylesheet" href="estilo.css">
-//    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+
 </head>
 <body>
 
@@ -37,18 +37,26 @@
 
         <div class="form-card">
             <form id="form-inicio">
-                <div class="form-group">
-    <label for="rede">Selecione a Rede:</label>
-    <select id="rede" name="rede">
-        <option value="">Carregando redes...</option>
-    </select>
+<div class="form-group">
+    <label for="rede-search">Selecione a Rede:</label>
+    <input type="text" id="rede-search" name="rede-search" class="custom-search-input" 
+           placeholder="Selecione ou digite uma rede" autocomplete="off">
+    <input type="hidden" id="rede-hidden" name="rede">
+
+    <div id="rede-options" class="options-container hidden">
+        <div class="option-item sticky-option" data-value="REDE NÃO ENCONTRADA">REDE NÃO ENCONTRADA</div>
+    </div>
 </div>
 
 <div class="form-group">
-    <label for="loja">Selecione a Loja:</label>
-    <select id="loja" name="loja" disabled>
-        <option value="">Selecione uma rede primeiro</option>
-    </select>
+    <label for="loja-search">Selecione a Loja:</label>
+    <input type="text" id="loja-search" name="loja-search" class="custom-search-input" 
+           placeholder="Selecione uma rede primeiro" autocomplete="off" disabled>
+    <input type="hidden" id="loja-hidden" name="loja">
+
+    <div id="loja-options" class="options-container hidden">
+        <div class="option-item sticky-option" data-value="LOJA NÃO ENCONTRADA">LOJA NÃO ENCONTRADA</div>
+    </div>
 </div>
                 <div class="form-group">
                     <label for="nome">Seu Nome:</label>
@@ -92,7 +100,6 @@
             </form>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     
     <script src="script.js" defer></script>
 </body>

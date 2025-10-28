@@ -192,25 +192,53 @@ app.get('/api/lojas', isUserLoggedIn, async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor ao buscar lojas.' });
     }
 });
-// Busca produtos filtrados pela REDE
+// Em server.js, substitua a rota /api/produtos_por_rede
+
 app.get('/api/produtos_por_rede', isUserLoggedIn, async (req, res) => {
-    const { rede } = req.query;
+    const { rede } = req.query; // Pega o parâmetro ?rede=
+
+    // Validação inicial (se nenhuma rede for passada, retorna erro)
     if (!rede) {
         return res.status(400).json({ message: 'O parâmetro "rede" é obrigatório.' });
     }
+
     try {
-        const query = `
-            SELECT p.codigo, p.nome, p.unidade, p.preco
-            FROM produtos p
-            JOIN rede_produtos rp ON p.codigo = rp.produto_codigo
-            WHERE rp.rede = $1
-            ORDER BY p.nome;
-        `;
-        const result = await pool.query(query, [rede]);
+        let result; // Variável para guardar o resultado da query
+
+        // --- NOVA LÓGICA CONDICIONAL ---
+        // Verifica se a rede selecionada é a genérica "NÃO ENCONTRADA"
+        if (rede === "REDE NÃO ENCONTRADA") {
+            console.log(`Buscando TODOS os produtos porque a rede é "${rede}"`);
+            // Query para buscar TODOS os produtos
+            result = await pool.query('SELECT codigo, nome, unidade, preco FROM produtos ORDER BY nome');
+        } else {
+            // Se a rede NÃO é "NÃO ENCONTRADA", tenta buscar os produtos específicos da rede
+            // Dentro do 'else' da rota /api/produtos_por_rede
+console.log(`Buscando produtos para a rede: ${rede}`);
+// CORREÇÃO: Usa a tabela 'rede_produtos' e a coluna 'rede'
+const queryEspecifica = `
+    SELECT p.codigo, p.nome, p.unidade, p.preco
+    FROM produtos p
+    INNER JOIN rede_produtos rp ON p.codigo = rp.produto_codigo -- Junta com a tabela correta
+    WHERE rp.rede = $1 -- Filtra pela coluna 'rede'
+    ORDER BY p.nome;
+`;
+result = await pool.query(queryEspecifica, [rede]);
+
+            // Se a busca específica NÃO retornou produtos, busca TODOS
+            if (result.rows.length === 0) {
+                console.log(`Nenhum produto encontrado para a rede "${rede}". Buscando TODOS os produtos como fallback.`);
+                result = await pool.query('SELECT codigo, nome, unidade, preco FROM produtos ORDER BY nome');
+            }
+        }
+        // --- FIM DA NOVA LÓGICA ---
+
+        // Envia o resultado (seja da rede específica ou todos os produtos)
         res.status(200).json(result.rows);
+
     } catch (error) {
-        console.error('Erro ao buscar produtos por rede:', error);
-        res.status(500).json({ message: 'Erro interno no servidor.' });
+        console.error('Erro ao buscar produtos por rede (com fallback):', error);
+        res.status(500).json({ message: 'Erro interno no servidor ao buscar produtos.' });
     }
 });
 
