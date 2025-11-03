@@ -386,7 +386,7 @@ if (nomeRede) {
 
         let htmlParaInserir = '';
         // !!! Lembre-se de colocar a sua URL real do Cloudinary aqui !!!
-        const cloudinaryBaseUrl = "https://res.cloudinary.com/SUA_CLOUD/image/upload/";
+        const cloudinaryBaseUrl = "https://res.cloudinary.com/dlnk6p5ug/image/upload/";
 
         produtosDaRede.forEach(produto => { // Iterar sobre produtosDaRede
             // Define o precoFormatado DENTRO do loop

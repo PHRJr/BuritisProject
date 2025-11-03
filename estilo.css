@@ -46,7 +46,7 @@ body {
 .dropdown-menu a:hover { background-color: #f1f1f1; }
 
 /* --- Estilos Gerais de Conteúdo --- */
-.container { max-width: 960px; margin: 20px auto; padding: 0 15px; }
+.container { max-width: 1140px; margin: 20px auto; padding: 0 15px; }
 h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
 .caixa-instrucoes { background-color: #e9f5ff; border-left: 5px solid var(--cor-primaria); padding: 15px 20px; margin-bottom: 30px; border-radius: 5px; font-size: 0.95em; line-height: 1.6; }
 .caixa-instrucoes p { margin: 0; }
@@ -56,8 +56,8 @@ h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
 .produto-imagem { flex: 0 0 120px; background-color: #fff; display: flex; align-items: center; justify-content: center; padding: 10px; }
 .produto-imagem img { max-width: 100%; height: auto; border-radius: 4px; }
 .produto-info { flex-grow: 1; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-.produto-info .nome { font-weight: bold; font-size: 1.1em; }
-.produto-info .preco { color: var(--cor-sucesso); font-weight: bold; }
+.produto-info .nome { font-weight: bold; font-size: 1em; }
+.produto-info .preco { color: var(--cor-sucesso); }
 .campo-quantidade { display: flex; align-items: center; gap: 8px; }
 .campo-quantidade input[type="number"] { flex-grow: 0;max-width:180px;}
 .campo-quantidade .unidade-texto { width: 50px; font-size: 0.9em; color: #6c757d; }
@@ -116,6 +116,14 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
         gap: 15px;
         padding: 10px 15px;
     }
+
+/* Adicione esta nova regra para igualar os campos */
+    .produto-card .campo-qtde,
+    .produto-card .campo-data {
+        max-width: 100px; /* Define o mesmo tamanho máximo do campo de preço */
+        width: 100%; 
+    }
+    
     #lista-produtos > .produto-card:last-of-type {
         border-bottom: none;
     }
@@ -152,7 +160,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     gap: 8px;
 }
 .campo-preco-unitario label {
-    font-weight: bold;
+    
     font-size: 0.9em;
     flex-shrink: 0;
 }
@@ -180,12 +188,17 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 @media (min-width: 769px) {
     /* CORREÇÃO: Alargamos a terceira coluna (de 110px para 250px) para dar espaço aos novos campos */
     .tabela-cabecalho, .produto-card {
-        grid-template-columns: 100px 1fr 200px 140px 80px 190px;
+        grid-template-columns: 120px 2fr 200px 120px 60px 190px;
     }
 
     /* Esconde os rótulos que só são necessários na vista mobile */
     .campo-preco-unitario label {
         display: none;
+    }
+
+    .produto-info .nome {
+        font-size: 0.9em;  /* <-- Defina o tamanho que desejar */
+        font-weight: bold; /* <-- Ex: Deixar a fonte mais fina */
     }
 
     /* Organiza o container do preço e dos checkboxes */
