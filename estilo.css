@@ -377,6 +377,14 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 /* Impedir redimensionamento da textarea de Observação */
 #observacao {
     resize: none; 
+
+    /* ADICIONE ESTAS LINHAS ABAIXO */
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    font-size: 1em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; /* Garante a mesma fonte */
 }
 
 /* Opcional: Se quiser aplicar a todas as textareas do site */
